@@ -16,6 +16,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { apiService } from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 import { Room } from "../../types";
 import { Header } from "../../components/ui/Header";
 import { Input } from "../../components/ui/Input";
@@ -40,11 +41,13 @@ export default function RoomManagementScreen({ onBack }: RoomManagementProps = {
   const [roomNumber, setRoomNumber] = useState("");
   const [capacity, setCapacity] = useState("4");
   const [hostelId, setHostelId] = useState("1");
+  const { user } = useAuth();
 
   const fetchRooms = async () => {
     setIsLoading(true);
     try {
-      const roomsData = await apiService.get<Room[]>("/rooms");
+      const hostelQuery = user?.role === "hostel_admin" && user?.hostel_id ? `?hostel_id=${user.hostel_id}` : "";
+      const roomsData = await apiService.get<Room[]>(`/rooms${hostelQuery}`);
       setRooms(roomsData);
       applyFilter(roomsData, activeFilter);
     } catch (e) {

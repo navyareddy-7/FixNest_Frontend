@@ -14,6 +14,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { apiService } from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 import { Complaint, User } from "../../types";
 import { Header } from "../../components/ui/Header";
 import { Card } from "../../components/ui/Card";
@@ -34,14 +35,16 @@ export default function ComplaintManagementScreen({ onBack }: ComplaintManagemen
   // Assignment Modal State
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const { user } = useAuth();
 
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const compData = await apiService.get<Complaint[]>("/complaints");
+      const hostelQuery = user?.role === "hostel_admin" && user?.hostel_id ? `?hostel_id=${user.hostel_id}` : "";
+      const compData = await apiService.get<Complaint[]>(`/complaints${hostelQuery}`);
       setComplaints(compData);
       
-      const workerData = await apiService.get<User[]>("/admin/workers");
+      const workerData = await apiService.get<User[]>(`/admin/workers${hostelQuery}`);
       setWorkers(workerData);
     } catch (err) {
       console.error("Failed to load dispatch board data:", err);
@@ -71,7 +74,8 @@ export default function ComplaintManagementScreen({ onBack }: ComplaintManagemen
       setSelectedComplaint(null);
       
       // Reload complaints list
-      const compData = await apiService.get<Complaint[]>("/complaints");
+      const hostelQuery = user?.role === "hostel_admin" && user?.hostel_id ? `?hostel_id=${user.hostel_id}` : "";
+      const compData = await apiService.get<Complaint[]>(`/complaints${hostelQuery}`);
       setComplaints(compData);
     } catch (err: any) {
       Alert.alert("Dispatch Failed", err.message || "Failed to assign worker.");

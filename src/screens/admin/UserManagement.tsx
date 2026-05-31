@@ -16,6 +16,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { apiService } from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 import { User } from "../../types";
 import { Header } from "../../components/ui/Header";
 import { Card } from "../../components/ui/Card";
@@ -43,16 +44,19 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
   const [hostelName, setHostelName] = useState("");
   const [roomNumber, setRoomNumber] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
+  const { user } = useAuth();
 
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
+      const hostelQuery = user?.role === "hostel_admin" && user?.hostel_id ? `?hostel_id=${user.hostel_id}` : "";
+      
       // Fetch workers from directory
-      const workersData = await apiService.get<User[]>("/admin/workers");
+      const workersData = await apiService.get<User[]>(`/admin/workers${hostelQuery}`);
       setWorkers(workersData);
       
       // Fetch students from directory
-      const studentsData = await apiService.get<User[]>("/admin/students");
+      const studentsData = await apiService.get<User[]>(`/admin/students${hostelQuery}`);
       setStudents(studentsData);
     } catch (err) {
       console.error("Failed to fetch user directories:", err);
