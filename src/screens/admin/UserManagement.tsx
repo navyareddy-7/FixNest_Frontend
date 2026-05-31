@@ -98,6 +98,7 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
           full_name: fullName.trim(),
           phone_number: phone.trim() || null,
           role: "worker",
+          hostel_id: user?.hostel_id || null,
         });
         setWorkers([...workers, newWorker]);
       } else {
