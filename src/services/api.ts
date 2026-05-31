@@ -16,18 +16,15 @@ export const apiService = {
   },
 
   async initApiBaseUrl(): Promise<string> {
+    // Force the production URL and update the cache so the old local IP is erased
     try {
-      let storedUrl = null;
       if (Platform.OS === "web") {
-        storedUrl = localStorage.getItem(CUSTOM_BASE_URL_KEY);
+        localStorage.setItem(CUSTOM_BASE_URL_KEY, BASE_URL);
       } else {
-        storedUrl = await SecureStore.getItemAsync(CUSTOM_BASE_URL_KEY);
-      }
-      if (storedUrl) {
-        BASE_URL = storedUrl;
+        await SecureStore.setItemAsync(CUSTOM_BASE_URL_KEY, BASE_URL);
       }
     } catch (e) {
-      console.error("Error loading custom API base URL:", e);
+      console.error("Error resetting custom API base URL:", e);
     }
     return BASE_URL;
   },
