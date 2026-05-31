@@ -26,6 +26,7 @@ export interface Complaint {
   status: ComplaintStatus;
   severity: ComplaintSeverity;
   image_url: string | null;
+  resolved_image_url?: string | null;
   student_id: number;
   worker_id: number | null;
   created_at: string;

@@ -19,6 +19,7 @@ import { apiService } from "../../services/api";
 import { Notice } from "../../types";
 import { Header } from "../../components/ui/Header";
 import { Input } from "../../components/ui/Input";
+import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { ResponsiveContainer } from "../../components/ui/ResponsiveContainer";
 import { Theme } from "../../constants/theme";
