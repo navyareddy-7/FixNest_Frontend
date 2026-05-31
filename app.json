@@ -19,7 +19,8 @@
         "monochromeImage": "./src/assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.fixnest.hostelmaintenanceapp"
     },
     "web": {
       "output": "static",
@@ -40,11 +41,25 @@
         }
       ],
       "expo-secure-store",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share them with your hostel admin.",
+          "cameraPermission": "The app accesses your camera to let you take photos of maintenance issues."
+        }
+      ],
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": false
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "18a05c69-428e-4716-907d-5a5525dffd96"
+      }
     }
   }
 }
