@@ -10,6 +10,10 @@ const CUSTOM_BASE_URL_KEY = "fixnest_custom_base_url";
 // Use the production Render backend URL
 let BASE_URL = "https://fixnest-backend.onrender.com/api";
 
+// Simple in-memory cache for GET requests (SWR style)
+const requestCache: Record<string, { data: any; timestamp: number }> = {};
+const CACHE_TTL_MS = 60000; // 60 seconds
+
 export const apiService = {
   getApiBaseUrl() {
     return BASE_URL;
@@ -39,6 +43,12 @@ export const apiService = {
       }
     } catch (e) {
       console.error("Error saving custom API base URL:", e);
+    }
+  },
+
+  async clearCache() {
+    for (const key in requestCache) {
+      delete requestCache[key];
     }
   },
 
@@ -91,6 +101,7 @@ export const apiService = {
         await SecureStore.deleteItemAsync(TOKEN_KEY);
         await SecureStore.deleteItemAsync(USER_KEY);
       }
+      this.clearCache(); // clear memory cache on logout
     } catch (e) {
       console.error("Error deleting credentials:", e);
     }
@@ -119,10 +130,20 @@ export const apiService = {
     } catch (e) {}
   },
 
-  async get<T>(path: string, includeAuth = true): Promise<T> {
+  async get<T>(path: string, includeAuth = true, bypassCache = false): Promise<T> {
+    const cacheKey = `${BASE_URL}${path}`;
+    
+    // Return cached data immediately if valid and not bypassing
+    if (!bypassCache && requestCache[cacheKey]) {
+      const age = Date.now() - requestCache[cacheKey].timestamp;
+      if (age < CACHE_TTL_MS) {
+        return requestCache[cacheKey].data as T;
+      }
+    }
+
     try {
       const headers = await this.getHeaders(includeAuth);
-      const response = await fetch(`${BASE_URL}${path}`, {
+      const response = await fetch(cacheKey, {
         method: "GET",
         headers,
       });
@@ -132,13 +153,22 @@ export const apiService = {
         throw new Error(err.detail || "Request failed");
       }
 
-      return await response.json();
+      const data = await response.json();
+      
+      // Save to cache
+      requestCache[cacheKey] = {
+        data,
+        timestamp: Date.now()
+      };
+      
+      return data;
     } catch (err: any) {
       throw new Error(err.message === "Failed to fetch" ? "Network error. The server might be sleeping or offline." : (err.message || "Request failed"));
     }
   },
 
   async post<T>(path: string, body: any, includeAuth = true): Promise<T> {
+    this.clearCache(); // Auto-invalidate cache on write
     try {
       const headers = await this.getHeaders(includeAuth);
       const response = await fetch(`${BASE_URL}${path}`, {
@@ -159,6 +189,7 @@ export const apiService = {
   },
 
   async put<T>(path: string, body: any, includeAuth = true): Promise<T> {
+    this.clearCache();
     try {
       const headers = await this.getHeaders(includeAuth);
       const response = await fetch(`${BASE_URL}${path}`, {
@@ -179,6 +210,7 @@ export const apiService = {
   },
 
   async delete<T>(path: string, includeAuth = true): Promise<T> {
+    this.clearCache();
     try {
       const headers = await this.getHeaders(includeAuth);
       const response = await fetch(`${BASE_URL}${path}`, {
