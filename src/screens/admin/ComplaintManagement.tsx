@@ -40,11 +40,13 @@ export default function ComplaintManagementScreen({ onBack }: ComplaintManagemen
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const hostelQuery = user?.role === "hostel_admin" && user?.hostel_id ? `?hostel_id=${user.hostel_id}` : "";
-      const compData = await apiService.get<Complaint[]>(`/complaints${hostelQuery}`);
-      setComplaints(compData);
+      const compData = await apiService.get<Complaint[]>("/complaints");
+      const filteredComp = user?.role === "hostel_admin" && user?.hostel_id 
+        ? compData.filter(c => c.hostel_id === user.hostel_id || c.student?.hostel_id === user.hostel_id)
+        : compData;
+      setComplaints(filteredComp);
       
-      const workerData = await apiService.get<User[]>(`/admin/workers${hostelQuery}`);
+      const workerData = await apiService.get<User[]>("/admin/workers");
       setWorkers(workerData);
     } catch (err) {
       console.error("Failed to load dispatch board data:", err);
@@ -74,9 +76,11 @@ export default function ComplaintManagementScreen({ onBack }: ComplaintManagemen
       setSelectedComplaint(null);
       
       // Reload complaints list
-      const hostelQuery = user?.role === "hostel_admin" && user?.hostel_id ? `?hostel_id=${user.hostel_id}` : "";
-      const compData = await apiService.get<Complaint[]>(`/complaints${hostelQuery}`);
-      setComplaints(compData);
+      const compData = await apiService.get<Complaint[]>("/complaints");
+      const filteredComp = user?.role === "hostel_admin" && user?.hostel_id 
+        ? compData.filter(c => c.hostel_id === user.hostel_id || c.student?.hostel_id === user.hostel_id)
+        : compData;
+      setComplaints(filteredComp);
     } catch (err: any) {
       Alert.alert("Dispatch Failed", err.message || "Failed to assign worker.");
     } finally {

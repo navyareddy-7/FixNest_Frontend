@@ -13,7 +13,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { apiService } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
-import { Analytics } from "../../types";
+import { Analytics, Complaint } from "../../types";
 import { Header } from "../../components/ui/Header";
 import { Card } from "../../components/ui/Card";
 import { ResponsiveContainer } from "../../components/ui/ResponsiveContainer";
@@ -36,8 +36,32 @@ export default function AdminDashboardScreen() {
   const fetchAnalytics = async (isRefreshing = false) => {
     if (!isRefreshing) setIsLoading(true);
     try {
-      const hostelQuery = user?.role === "hostel_admin" && user?.hostel_id ? `?hostel_id=${user.hostel_id}` : "";
-      const data = await apiService.get<Analytics>(`/admin/analytics${hostelQuery}`);
+      const compData = await apiService.get<Complaint[]>("/complaints");
+      const filteredComplaints = user?.role === "hostel_admin" && user?.hostel_id 
+        ? compData.filter(c => c.hostel_id === user.hostel_id || c.student?.hostel_id === user.hostel_id)
+        : compData;
+
+      const pending = filteredComplaints.filter(c => c.status === "pending").length;
+      const in_progress = filteredComplaints.filter(c => c.status === "in_progress").length;
+      const resolved = filteredComplaints.filter(c => c.status === "resolved").length;
+      
+      const category_metrics: Record<string, number> = {};
+      filteredComplaints.forEach(c => {
+        category_metrics[c.category] = (category_metrics[c.category] || 0) + 1;
+      });
+
+      const data: Analytics = {
+        status_metrics: {
+          pending,
+          in_progress,
+          resolved,
+          total: filteredComplaints.length,
+        },
+        category_metrics,
+        worker_workload: [],
+        average_resolution_hours: 0,
+      };
+      
       setAnalytics(data);
     } catch (err) {
       console.error("Failed to load admin analytics:", err);

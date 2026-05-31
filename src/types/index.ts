@@ -22,6 +22,7 @@ export interface Complaint {
   description: string;
   category: string; // plumbing, electrical, carpentry, housekeeping, other
   room_number: string;
+  hostel_id?: number;
   hostel_name: string;
   status: ComplaintStatus;
   severity: ComplaintSeverity;

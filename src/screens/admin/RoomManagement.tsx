@@ -46,10 +46,12 @@ export default function RoomManagementScreen({ onBack }: RoomManagementProps = {
   const fetchRooms = async () => {
     setIsLoading(true);
     try {
-      const hostelQuery = user?.role === "hostel_admin" && user?.hostel_id ? `?hostel_id=${user.hostel_id}` : "";
-      const roomsData = await apiService.get<Room[]>(`/rooms${hostelQuery}`);
-      setRooms(roomsData);
-      applyFilter(roomsData, activeFilter);
+      const roomsData = await apiService.get<Room[]>("/rooms");
+      const filteredRooms = user?.role === "hostel_admin" && user?.hostel_id
+        ? roomsData.filter(r => r.hostel_id === user.hostel_id)
+        : roomsData;
+      setRooms(filteredRooms);
+      applyFilter(filteredRooms, activeFilter);
     } catch (e) {
       console.error("Failed to load rooms:", e);
       Alert.alert("Error", "Could not load rooms directory from server.");

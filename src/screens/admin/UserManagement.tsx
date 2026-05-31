@@ -49,15 +49,16 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const hostelQuery = user?.role === "hostel_admin" && user?.hostel_id ? `?hostel_id=${user.hostel_id}` : "";
-      
-      // Fetch workers from directory
-      const workersData = await apiService.get<User[]>(`/admin/workers${hostelQuery}`);
+      // Fetch workers from directory (workers are global, so we don't filter them by hostel)
+      const workersData = await apiService.get<User[]>("/admin/workers");
       setWorkers(workersData);
       
-      // Fetch students from directory
-      const studentsData = await apiService.get<User[]>(`/admin/students${hostelQuery}`);
-      setStudents(studentsData);
+      // Fetch students from directory and filter if needed
+      const studentsData = await apiService.get<User[]>("/admin/students");
+      const filteredStudents = user?.role === "hostel_admin" && user?.hostel_id 
+        ? studentsData.filter(s => s.hostel_id === user.hostel_id)
+        : studentsData;
+      setStudents(filteredStudents);
     } catch (err) {
       console.error("Failed to fetch user directories:", err);
       Alert.alert("Error", "Could not load user directories.");
