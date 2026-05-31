@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fixnest_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - SECRET_KEY=39ee79989b5c2d30db5f5cc1d6c8b1115df8a5e12e09ff7b34b9d0de6d0e65d2
+      - ACCESS_TOKEN_EXPIRE_MINUTES=11520
