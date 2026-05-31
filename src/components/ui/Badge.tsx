@@ -10,7 +10,7 @@ interface BadgeProps {
 }
 
 export const Badge: React.FC<BadgeProps> = ({ label, type, value, style }) => {
-  const normValue = value.toLowerCase().replace(" ", "_");
+  const normValue = String(value || "").toLowerCase().replace(/ /g, "_");
 
   // Soft pastel styles
   const getBadgeColors = () => {

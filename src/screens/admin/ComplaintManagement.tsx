@@ -91,7 +91,7 @@ export default function ComplaintManagementScreen({ onBack }: ComplaintManagemen
       <View style={styles.cardHeader}>
         <Text style={styles.ticketId}>Ticket #{item.id}</Text>
         <View style={styles.row}>
-          <Badge type="status" value={item.status} label={item.status.replace("_", " ")} style={{ marginRight: 6 }} />
+          <Badge type="status" value={item.status} label={String(item.status || "").replace("_", " ")} style={{ marginRight: 6 }} />
           <Badge type="severity" value={item.severity} label={item.severity} />
         </View>
       </View>

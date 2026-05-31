@@ -74,14 +74,20 @@ export default function ProfileScreen({ onBack }: ProfileScreenProps) {
 
   const handleLogout = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    Alert.alert(
-      "Sign Out",
-      "Are you sure you want to sign out of FixNest?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Sign Out", style: "destructive", onPress: logout },
-      ]
-    );
+    if (Platform.OS === "web") {
+      if (window.confirm("Are you sure you want to sign out of FixNest?")) {
+        logout();
+      }
+    } else {
+      Alert.alert(
+        "Sign Out",
+        "Are you sure you want to sign out of FixNest?",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Sign Out", style: "destructive", onPress: logout },
+        ]
+      );
+    }
   };
 
   return (
@@ -105,7 +111,7 @@ export default function ProfileScreen({ onBack }: ProfileScreenProps) {
             <View style={styles.userMeta}>
               <Text style={styles.userName}>{user?.full_name}</Text>
               <Text style={styles.userRole}>
-                Role: {user?.role ? user.role.replace("_", " ").toUpperCase() : "STUDENT"}
+                Role: {user?.role ? String(user.role).replace("_", " ").toUpperCase() : "STUDENT"}
               </Text>
               <Text style={styles.userEmail}>{user?.email}</Text>
             </View>

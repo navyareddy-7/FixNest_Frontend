@@ -137,7 +137,7 @@ export default function WorkerDashboardScreen() {
             </View>
             <Text style={styles.categoryText}>{item.category}</Text>
           </View>
-          <Badge type="status" value={item.status} label={item.status.replace("_", " ")} />
+          <Badge type="status" value={item.status} label={String(item.status || "").replace("_", " ")} />
         </View>
 
         <Text style={styles.cardTitle}>{item.title}</Text>
@@ -251,7 +251,7 @@ export default function WorkerDashboardScreen() {
               <Text style={styles.emptyDesc}>
                 {activeFilter === "all"
                   ? "You have zero maintenance tasks currently assigned."
-                  : `You have no tasks in '${activeFilter.replace("_", " ")}' status.`}
+                  : `You have no tasks in '${String(activeFilter || "").replace("_", " ")}' status.`}
               </Text>
             </View>
           }

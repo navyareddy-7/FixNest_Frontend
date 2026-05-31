@@ -159,7 +159,7 @@ export default function StudentDashboardScreen() {
             </View>
             <Text style={styles.categoryText}>{item.category}</Text>
           </View>
-          <Badge type="status" value={item.status} label={item.status.replace("_", " ")} />
+          <Badge type="status" value={item.status} label={String(item.status || "").replace("_", " ")} />
         </View>
 
         <Text style={styles.cardTitle}>{item.title}</Text>
@@ -170,7 +170,7 @@ export default function StudentDashboardScreen() {
         <View style={styles.cardFooter}>
           <Text style={styles.locationText}>
             <Ionicons name="location-outline" size={14} color={Theme.colors.textLight} />{" "}
-            Floor {item.room_number ? (item.room_number.replace(/\D/g, '').charAt(0) || "1") : "1"}, Room {item.room_number || "Unknown"}
+            Floor {item.room_number ? (String(item.room_number).replace(/\D/g, '').charAt(0) || "1") : "1"}, Room {item.room_number || "Unknown"}
           </Text>
           <Badge type="severity" value={item.severity} label={`${item.severity} priority`} />
         </View>
@@ -358,7 +358,7 @@ export default function StudentDashboardScreen() {
               <Text style={styles.emptyDesc}>
                 {activeFilter === "all"
                   ? "You haven't logged any maintenance requests yet."
-                  : `You have no complaints marked as ${activeFilter.replace("_", " ")}.`}
+                  : `You have no complaints marked as ${String(activeFilter || "").replace("_", " ")}.`}
               </Text>
               {activeFilter === "all" && (
                 <TouchableOpacity

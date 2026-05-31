@@ -120,85 +120,105 @@ export const apiService = {
   },
 
   async get<T>(path: string, includeAuth = true): Promise<T> {
-    const headers = await this.getHeaders(includeAuth);
-    const response = await fetch(`${BASE_URL}${path}`, {
-      method: "GET",
-      headers,
-    });
+    try {
+      const headers = await this.getHeaders(includeAuth);
+      const response = await fetch(`${BASE_URL}${path}`, {
+        method: "GET",
+        headers,
+      });
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({ detail: "Request failed" }));
-      throw new Error(err.detail || "Request failed");
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ detail: "Request failed with status " + response.status }));
+        throw new Error(err.detail || "Request failed");
+      }
+
+      return await response.json();
+    } catch (err: any) {
+      throw new Error(err.message === "Failed to fetch" ? "Network error. The server might be sleeping or offline." : (err.message || "Request failed"));
     }
-
-    return response.json() as Promise<T>;
   },
 
   async post<T>(path: string, body: any, includeAuth = true): Promise<T> {
-    const headers = await this.getHeaders(includeAuth);
-    const response = await fetch(`${BASE_URL}${path}`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-    });
+    try {
+      const headers = await this.getHeaders(includeAuth);
+      const response = await fetch(`${BASE_URL}${path}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+      });
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({ detail: "Request failed" }));
-      throw new Error(err.detail || "Request failed");
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ detail: "Request failed with status " + response.status }));
+        throw new Error(err.detail || "Request failed");
+      }
+
+      return await response.json();
+    } catch (err: any) {
+      throw new Error(err.message === "Failed to fetch" ? "Network error. The server might be sleeping or offline." : (err.message || "Request failed"));
     }
-
-    return response.json() as Promise<T>;
   },
 
   async put<T>(path: string, body: any, includeAuth = true): Promise<T> {
-    const headers = await this.getHeaders(includeAuth);
-    const response = await fetch(`${BASE_URL}${path}`, {
-      method: "PUT",
-      headers,
-      body: JSON.stringify(body),
-    });
+    try {
+      const headers = await this.getHeaders(includeAuth);
+      const response = await fetch(`${BASE_URL}${path}`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify(body),
+      });
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({ detail: "Request failed" }));
-      throw new Error(err.detail || "Request failed");
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ detail: "Request failed with status " + response.status }));
+        throw new Error(err.detail || "Request failed");
+      }
+
+      return await response.json();
+    } catch (err: any) {
+      throw new Error(err.message === "Failed to fetch" ? "Network error. The server might be sleeping or offline." : (err.message || "Request failed"));
     }
-
-    return response.json() as Promise<T>;
   },
 
   async delete<T>(path: string, includeAuth = true): Promise<T> {
-    const headers = await this.getHeaders(includeAuth);
-    const response = await fetch(`${BASE_URL}${path}`, {
-      method: "DELETE",
-      headers,
-    });
+    try {
+      const headers = await this.getHeaders(includeAuth);
+      const response = await fetch(`${BASE_URL}${path}`, {
+        method: "DELETE",
+        headers,
+      });
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({ detail: "Request failed" }));
-      throw new Error(err.detail || "Request failed");
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ detail: "Request failed with status " + response.status }));
+        throw new Error(err.detail || "Request failed");
+      }
+
+      return await response.json();
+    } catch (err: any) {
+      throw new Error(err.message === "Failed to fetch" ? "Network error. The server might be sleeping or offline." : (err.message || "Request failed"));
     }
-
-    return response.json() as Promise<T>;
   },
 
   async postForm<T>(path: string, formData: FormData): Promise<T> {
-    const token = await this.getToken();
-    const headers: HeadersInit = {};
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
+    try {
+      const token = await this.getToken();
+      const headers: HeadersInit = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${BASE_URL}${path}`, {
+        method: "POST",
+        headers,
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ detail: "Request failed with status " + response.status }));
+        throw new Error(err.detail || "Request failed");
+      }
+
+      return await response.json();
+    } catch (err: any) {
+      throw new Error(err.message === "Failed to fetch" ? "Network error. The server might be sleeping or offline." : (err.message || "Request failed"));
     }
-
-    const response = await fetch(`${BASE_URL}${path}`, {
-      method: "POST",
-      headers,
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({ detail: "Request failed" }));
-      throw new Error(err.detail || "Request failed");
-    }
-
-    return response.json() as Promise<T>;
   }
 };

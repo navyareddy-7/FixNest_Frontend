@@ -89,7 +89,7 @@ export default function WorkerTaskDetailScreen({ taskId, onBack }: WorkerTaskDet
       setComments(commData);
       
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Status Updated", `Task status successfully updated to: ${newStatus.replace("_", " ").toUpperCase()}`);
+      Alert.alert("Status Updated", `Task status successfully updated to: ${String(newStatus || "").replace("_", " ").toUpperCase()}`);
     } catch (err: any) {
       Alert.alert("Error", err.message || "Failed to update status.");
     } finally {
@@ -190,7 +190,7 @@ export default function WorkerTaskDetailScreen({ taskId, onBack }: WorkerTaskDet
         <Card style={styles.card}>
           <View style={styles.rowBetween}>
             <Text style={styles.ticketId}>Job #{complaint.id}</Text>
-            <Badge type="status" value={complaint.status} label={complaint.status.replace("_", " ")} />
+            <Badge type="status" value={complaint.status} label={String(complaint.status || "").replace("_", " ")} />
           </View>
 
           <Text style={styles.title}>{complaint.title}</Text>

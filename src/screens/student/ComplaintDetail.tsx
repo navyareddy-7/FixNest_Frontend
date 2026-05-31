@@ -113,7 +113,7 @@ export default function ComplaintDetailScreen({ complaintId, onBack }: Complaint
         <Card style={styles.card}>
           <View style={styles.rowBetween}>
             <Text style={styles.ticketId}>Ticket #{complaint.id}</Text>
-            <Badge type="status" value={complaint.status} label={complaint.status.replace("_", " ")} />
+            <Badge type="status" value={complaint.status} label={String(complaint.status || "").replace("_", " ")} />
           </View>
 
           <Text style={styles.title}>{complaint.title}</Text>
