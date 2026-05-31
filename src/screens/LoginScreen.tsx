@@ -80,8 +80,14 @@ export default function LoginScreen() {
   };
 
   const handleForgotPassword = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setActiveAuthScreen("forgot_password");
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    if (Platform.OS === "web") {
+      window.alert("Please contact your Hostel Administrator for a password change.");
+    } else {
+      Alert.alert("Password Reset", "Please contact your Hostel Administrator for a password change.");
+    }
   };
 
   const handleForgotSubmit = async () => {
