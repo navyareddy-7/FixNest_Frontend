@@ -102,6 +102,19 @@ export default function WorkerTaskDetailScreen({ taskId, onBack }: WorkerTaskDet
   };
 
   const handleResolveWithPhoto = async () => {
+    if (Platform.OS === "web") {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.5,
+        base64: true,
+      });
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const base64 = result.assets[0].base64;
+        if (base64) handleUpdateStatus("resolved", base64);
+      }
+      return;
+    }
+
     Alert.alert(
       "Attach Resolution Photo",
       "Please upload a photo of the completed work.",

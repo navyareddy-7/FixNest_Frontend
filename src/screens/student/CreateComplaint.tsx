@@ -43,8 +43,22 @@ export default function CreateComplaintScreen({ onBack, onSubmitSuccess }: Creat
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
-  const handleSimulateImage = () => {
+  const handleSimulateImage = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    if (Platform.OS === "web") {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        base64: true,
+        allowsEditing: true,
+        quality: 0.5,
+      });
+      if (!result.canceled && result.assets && result.assets.length > 0 && result.assets[0].base64) {
+        setSimulatedImage(`data:image/jpeg;base64,${result.assets[0].base64}`);
+      }
+      return;
+    }
+
     Alert.alert(
       "Attach Image",
       "Choose a photo source",
