@@ -126,6 +126,8 @@ const styles = StyleSheet.create({
     height: "100%",
     fontSize: Theme.typography.body.fontSize,
     color: Theme.colors.text,
+    //@ts-ignore - web only property
+    outlineStyle: "none",
   },
   rightIcon: {
     padding: Theme.spacing.xs,

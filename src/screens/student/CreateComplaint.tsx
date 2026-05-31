@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
   formCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: Theme.roundness.lg,
-    padding: Theme.spacing.md,
+    padding: 24,
     shadowColor: "#0A2A66",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
@@ -333,14 +333,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     marginBottom: Theme.spacing.md,
+    gap: 10,
   },
   categoryBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: Theme.roundness.md,
     backgroundColor: "#F0F4FC",
-    marginRight: 8,
-    marginBottom: 8,
     borderWidth: 1,
     borderColor: "transparent",
   },
@@ -358,13 +357,14 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   textArea: {
-    height: 100,
+    minHeight: 120,
     textAlignVertical: "top",
     paddingTop: 12,
   },
   row: {
     flexDirection: "row",
     marginBottom: 16,
+    gap: 12,
   },
   flex1: {
     flex: 1,
@@ -378,7 +378,6 @@ const styles = StyleSheet.create({
     borderColor: Theme.colors.border,
     borderRadius: Theme.roundness.md,
     paddingVertical: 12,
-    marginHorizontal: 4,
     backgroundColor: "#FFFFFF",
   },
   severityDot: {
