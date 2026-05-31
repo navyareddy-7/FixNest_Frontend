@@ -123,7 +123,7 @@ export default function LoginScreen() {
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
-      <ResponsiveContainer>
+      <ResponsiveContainer style={{ maxWidth: 440 }}>
       {/* Logo & Brand identity */}
       <View style={styles.brandContainer}>
         <Image
