@@ -28,7 +28,9 @@ export const Header: React.FC<HeaderProps> = ({
   const { logout } = useAuth();
 
   const handleBack = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     if (onBack) {
       onBack();
     } else {
@@ -37,7 +39,9 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const handleLogout = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    if (Platform.OS !== "web") {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
     logout();
   };
 

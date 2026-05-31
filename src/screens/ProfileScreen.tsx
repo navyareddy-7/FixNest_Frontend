@@ -41,7 +41,9 @@ export default function ProfileScreen({ onBack }: ProfileScreenProps) {
     }
 
     setIsUpdating(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
 
     try {
       const updates: any = {
@@ -61,7 +63,9 @@ export default function ProfileScreen({ onBack }: ProfileScreenProps) {
       await updateProfile(updates);
       setNewPassword("");
       setIsEditing(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
       Alert.alert("Success", "Profile updated successfully.");
     } catch (err: any) {
       Alert.alert("Error", err.message || "Failed to update profile.");
@@ -73,7 +77,9 @@ export default function ProfileScreen({ onBack }: ProfileScreenProps) {
 
 
   const handleLogout = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    if (Platform.OS !== "web") {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    }
     if (Platform.OS === "web") {
       if (window.confirm("Are you sure you want to sign out of FixNest?")) {
         logout();

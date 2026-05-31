@@ -27,24 +27,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadStoredCredentials = async () => {
     try {
-      // Load custom API Base URL if configured
       await apiService.initApiBaseUrl();
-      
       const storedToken = await apiService.getToken();
-      if (storedToken) {
+      const storedUser = await apiService.getUser();
+      
+      if (storedToken && storedUser) {
+        // Optimistic load for INSTANT startup
         setToken(storedToken);
-        try {
-          const profile = await apiService.get<User>("/auth/me");
+        setUser(storedUser);
+        setIsLoading(false); // Drop the loading screen immediately
+        
+        // Background verify
+        apiService.get<User>("/auth/me").then(profile => {
           setUser(profile);
-        } catch (err) {
-          console.error("Session expired, logging out:", err);
+        }).catch(async (err) => {
+          console.error("Session expired background:", err);
           await apiService.removeToken();
           setToken(null);
           setUser(null);
-        }
+        });
+      } else if (storedToken) {
+        setToken(storedToken);
+        const profile = await apiService.get<User>("/auth/me");
+        setUser(profile);
       }
     } catch (e) {
       console.error("Failed to load credentials:", e);
+      await apiService.removeToken();
+      setToken(null);
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
