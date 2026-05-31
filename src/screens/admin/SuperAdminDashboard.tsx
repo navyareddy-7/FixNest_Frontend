@@ -9,6 +9,7 @@ import {
   Alert,
   Modal,
   StatusBar,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -96,7 +97,11 @@ export default function SuperAdminDashboardScreen() {
 
       setHostels([...hostels, newHostel]);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Hostel Created", `${newHostelName} has been successfully registered under global operations.`);
+      if (Platform.OS === "web") {
+        window.alert(`Hostel Created\n\n${newHostelName} has been successfully registered under global operations.`);
+      } else {
+        Alert.alert("Hostel Created", `${newHostelName} has been successfully registered under global operations.`);
+      }
       
       setNewHostelName("");
       setHostelLocation("");
@@ -155,7 +160,11 @@ export default function SuperAdminDashboardScreen() {
           role: "hostel_admin"
         });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Alert.alert("Admin Updated", `${adminName} has been updated.`);
+        if (Platform.OS === "web") {
+          window.alert(`Admin Updated\n\n${adminName} has been updated.`);
+        } else {
+          Alert.alert("Admin Updated", `${adminName} has been updated.`);
+        }
       } else {
         // Create Admin
         await apiService.post("/admin/admins", {
@@ -167,7 +176,11 @@ export default function SuperAdminDashboardScreen() {
           role: "hostel_admin"
         });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Alert.alert("Admin Created", `${adminName} has been registered.`);
+        if (Platform.OS === "web") {
+          window.alert(`Admin Created\n\n${adminName} has been registered.`);
+        } else {
+          Alert.alert("Admin Created", `${adminName} has been registered.`);
+        }
       }
       
       setAdminModalVisible(false);
@@ -180,31 +193,46 @@ export default function SuperAdminDashboardScreen() {
   };
 
   const handleDeleteAdmin = (admin: User) => {
-    Alert.alert(
-      "Confirm Deletion",
-      `Are you sure you want to permanently delete the admin "${admin.full_name}"? This action cannot be undone.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete", 
-          style: "destructive", 
-          onPress: async () => {
-            setIsDeletingAdmin(admin.id);
-            try {
-              await apiService.delete(`/admin/admins/${admin.id}`);
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              Alert.alert("Deleted", "Admin has been successfully removed.");
-              fetchData();
-            } catch (e: any) {
-              console.error(e);
-              Alert.alert("Error", e.message || "Failed to delete admin.");
-            } finally {
-              setIsDeletingAdmin(null);
-            }
-          } 
-        }
-      ]
-    );
+    if (Platform.OS === "web") {
+      if (window.confirm(`Confirm Deletion\n\nAre you sure you want to permanently delete the admin "${admin.full_name}"? This action cannot be undone.`)) {
+        setIsDeletingAdmin(admin.id);
+        apiService.delete(`/admin/admins/${admin.id}`).then(() => {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          window.alert("Deleted: Admin has been successfully removed.");
+          fetchData();
+        }).catch((e: any) => {
+          window.alert("Error: " + (e.message || "Failed to delete admin."));
+        }).finally(() => {
+          setIsDeletingAdmin(null);
+        });
+      }
+    } else {
+      Alert.alert(
+        "Confirm Deletion",
+        `Are you sure you want to permanently delete the admin "${admin.full_name}"? This action cannot be undone.`,
+        [
+          { text: "Cancel", style: "cancel" },
+          { 
+            text: "Delete", 
+            style: "destructive", 
+            onPress: async () => {
+              setIsDeletingAdmin(admin.id);
+              try {
+                await apiService.delete(`/admin/admins/${admin.id}`);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                Alert.alert("Deleted", "Admin has been successfully removed.");
+                fetchData();
+              } catch (e: any) {
+                console.error(e);
+                Alert.alert("Error", e.message || "Failed to delete admin.");
+              } finally {
+                setIsDeletingAdmin(null);
+              }
+            } 
+          }
+        ]
+      );
+    }
   };
 
   if (activeView === "profile") {

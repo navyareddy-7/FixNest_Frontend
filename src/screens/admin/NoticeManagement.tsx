@@ -74,7 +74,11 @@ export default function NoticeManagementScreen({ onBack }: NoticeManagementProps
 
       setNotices([newNotice, ...notices]);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Notice Published", "Your announcement is now live for relevant students.");
+      if (Platform.OS === "web") {
+        window.alert("Notice Published\n\nYour announcement is now live for relevant students.");
+      } else {
+        Alert.alert("Notice Published", "Your announcement is now live for relevant students.");
+      }
       
       // Reset form
       setTitle("");
@@ -90,27 +94,40 @@ export default function NoticeManagementScreen({ onBack }: NoticeManagementProps
 
   const handleDeleteNotice = (id: number) => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    Alert.alert(
-      "Remove Announcement",
-      "Are you sure you want to permanently delete this notice?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: async () => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            try {
-              await apiService.delete(`/notices/${id}`);
-              setNotices(notices.filter((n) => n.id !== id));
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            } catch (err: any) {
-              Alert.alert("Error", err.message || "Failed to delete notice from database.");
-            }
+    if (Platform.OS === "web") {
+      if (window.confirm("Remove Announcement\n\nAre you sure you want to permanently delete this notice?")) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        apiService.delete(`/notices/${id}`).then(() => {
+          setNotices(notices.filter((n) => n.id !== id));
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          window.alert("Notice Removed Successfully");
+        }).catch((err: any) => {
+          window.alert("Error: " + (err.message || "Failed to delete notice from database."));
+        });
+      }
+    } else {
+      Alert.alert(
+        "Remove Announcement",
+        "Are you sure you want to permanently delete this notice?",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Remove",
+            style: "destructive",
+            onPress: async () => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              try {
+                await apiService.delete(`/notices/${id}`);
+                setNotices(notices.filter((n) => n.id !== id));
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              } catch (err: any) {
+                Alert.alert("Error", err.message || "Failed to delete notice from database.");
+              }
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
   const renderNoticeCard = ({ item }: { item: Notice }) => {

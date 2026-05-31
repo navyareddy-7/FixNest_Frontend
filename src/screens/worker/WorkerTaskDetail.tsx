@@ -89,7 +89,11 @@ export default function WorkerTaskDetailScreen({ taskId, onBack }: WorkerTaskDet
       setComments(commData);
       
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Status Updated", `Task status successfully updated to: ${String(newStatus || "").replace("_", " ").toUpperCase()}`);
+      if (Platform.OS === "web") {
+        window.alert(`Status Updated\n\nTask status successfully updated to: ${String(newStatus || "").replace("_", " ").toUpperCase()}`);
+      } else {
+        Alert.alert("Status Updated", `Task status successfully updated to: ${String(newStatus || "").replace("_", " ").toUpperCase()}`);
+      }
     } catch (err: any) {
       Alert.alert("Error", err.message || "Failed to update status.");
     } finally {
@@ -158,6 +162,11 @@ export default function WorkerTaskDetailScreen({ taskId, onBack }: WorkerTaskDet
       setComments([...comments, addedComment]);
       setNewComment("");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (Platform.OS === "web") {
+        window.alert("Reply Added Successfully.");
+      } else {
+        Alert.alert("Success", "Reply Added.");
+      }
     } catch (err: any) {
       Alert.alert("Post Failed", err.message || "Failed to add timeline note.");
     } finally {

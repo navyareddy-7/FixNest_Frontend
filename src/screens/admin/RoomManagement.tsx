@@ -94,7 +94,11 @@ export default function RoomManagementScreen({ onBack }: RoomManagementProps = {
       applyFilter(updated, activeFilter);
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Room Added", `Room ${roomNumber} has been successfully registered.`);
+      if (Platform.OS === "web") {
+        window.alert(`Room Added\n\nRoom ${roomNumber} has been successfully registered.`);
+      } else {
+        Alert.alert("Room Added", `Room ${roomNumber} has been successfully registered.`);
+      }
       
       // Reset form
       setRoomNumber("");
@@ -112,34 +116,52 @@ export default function RoomManagementScreen({ onBack }: RoomManagementProps = {
     const inMaintenance = room.status === "maintenance";
     const nextStatus = (inMaintenance ? "available" : "maintenance") as Room["status"];
 
-    Alert.alert(
-      `${inMaintenance ? "Resolve" : "Flag"} Maintenance`,
-      `Are you sure you want to ${inMaintenance ? "remove room from" : "flag room as"} maintenance mode?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: inMaintenance ? "Restore" : "Flag",
-          style: inMaintenance ? "default" : "destructive",
-          onPress: async () => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            try {
-              const updatedRoom = await apiService.put<Room>(`/rooms/${room.id}`, {
-                status: nextStatus,
-                occupied: nextStatus === "maintenance" ? 0 : room.occupied,
-              });
-              const updated = rooms.map((r) =>
-                r.id === room.id ? updatedRoom : r
-              );
-              setRooms(updated);
-              applyFilter(updated, activeFilter);
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            } catch (err: any) {
-              Alert.alert("Error", err.message || "Could not update room maintenance status.");
-            }
+    if (Platform.OS === "web") {
+      if (window.confirm(`${inMaintenance ? "Resolve" : "Flag"} Maintenance\n\nAre you sure you want to ${inMaintenance ? "remove room from" : "flag room as"} maintenance mode?`)) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        apiService.put<Room>(`/rooms/${room.id}`, {
+          status: nextStatus,
+          occupied: nextStatus === "maintenance" ? 0 : room.occupied,
+        }).then((updatedRoom) => {
+          const updated = rooms.map((r) => (r.id === room.id ? updatedRoom : r));
+          setRooms(updated);
+          applyFilter(updated, activeFilter);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          window.alert("Success: Maintenance status updated.");
+        }).catch((err: any) => {
+          window.alert("Error: " + (err.message || "Could not update room maintenance status."));
+        });
+      }
+    } else {
+      Alert.alert(
+        `${inMaintenance ? "Resolve" : "Flag"} Maintenance`,
+        `Are you sure you want to ${inMaintenance ? "remove room from" : "flag room as"} maintenance mode?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: inMaintenance ? "Restore" : "Flag",
+            style: inMaintenance ? "default" : "destructive",
+            onPress: async () => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              try {
+                const updatedRoom = await apiService.put<Room>(`/rooms/${room.id}`, {
+                  status: nextStatus,
+                  occupied: nextStatus === "maintenance" ? 0 : room.occupied,
+                });
+                const updated = rooms.map((r) =>
+                  r.id === room.id ? updatedRoom : r
+                );
+                setRooms(updated);
+                applyFilter(updated, activeFilter);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              } catch (err: any) {
+                Alert.alert("Error", err.message || "Could not update room maintenance status.");
+              }
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
   const renderFilterPill = (filter: typeof activeFilter, label: string) => {

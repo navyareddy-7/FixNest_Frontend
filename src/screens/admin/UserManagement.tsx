@@ -109,7 +109,11 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
       }
  
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Account Created", `Successfully created ${activeTab} account for ${fullName.trim()}.`);
+      if (Platform.OS === "web") {
+        window.alert(`Account Created\n\nSuccessfully created ${activeTab} account for ${fullName.trim()}.`);
+      } else {
+        Alert.alert("Account Created", `Successfully created ${activeTab} account for ${fullName.trim()}.`);
+      }
       
       // Reset form
       setFullName("");
@@ -130,38 +134,55 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     const newStatus = user.status === "active" ? "suspended" : "active";
     
-    Alert.alert(
-      `${newStatus === "active" ? "Unblock" : "Block"} User`,
-      `Are you sure you want to ${newStatus === "active" ? "activate" : "block"} ${user.full_name}'s account?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: newStatus === "active" ? "Activate" : "Block",
-          style: newStatus === "active" ? "default" : "destructive",
-          onPress: async () => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            try {
-              const updatedUser = await apiService.put<User>(
-                `/admin/users/${user.id}/status?status=${newStatus}`,
-                {}
-              );
-              if (user.role === "student") {
-                setStudents(
-                  students.map((s) => (s.id === user.id ? updatedUser : s))
+    if (Platform.OS === "web") {
+      if (window.confirm(`${newStatus === "active" ? "Unblock" : "Block"} User\n\nAre you sure you want to ${newStatus === "active" ? "activate" : "block"} ${user.full_name}'s account?`)) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        apiService.put<User>(`/admin/users/${user.id}/status?status=${newStatus}`, {}).then((updatedUser) => {
+          if (user.role === "student") {
+            setStudents(students.map((s) => (s.id === user.id ? updatedUser : s)));
+          } else {
+            setWorkers(workers.map((w) => (w.id === user.id ? updatedUser : w)));
+          }
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          window.alert(`Success: User ${newStatus === "active" ? "activated" : "blocked"}.`);
+        }).catch((err: any) => {
+          window.alert("Status Update Failed: " + (err.message || "Could not update user status."));
+        });
+      }
+    } else {
+      Alert.alert(
+        `${newStatus === "active" ? "Unblock" : "Block"} User`,
+        `Are you sure you want to ${newStatus === "active" ? "activate" : "block"} ${user.full_name}'s account?`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: newStatus === "active" ? "Activate" : "Block",
+            style: newStatus === "active" ? "default" : "destructive",
+            onPress: async () => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              try {
+                const updatedUser = await apiService.put<User>(
+                  `/admin/users/${user.id}/status?status=${newStatus}`,
+                  {}
                 );
-              } else {
-                setWorkers(
-                  workers.map((w) => (w.id === user.id ? updatedUser : w))
-                );
+                if (user.role === "student") {
+                  setStudents(
+                    students.map((s) => (s.id === user.id ? updatedUser : s))
+                  );
+                } else {
+                  setWorkers(
+                    workers.map((w) => (w.id === user.id ? updatedUser : w))
+                  );
+                }
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              } catch (err: any) {
+                Alert.alert("Status Update Failed", err.message || "Could not update user status.");
               }
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            } catch (err: any) {
-              Alert.alert("Status Update Failed", err.message || "Could not update user status.");
-            }
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
   const renderUserCard = ({ item }: { item: User }) => {

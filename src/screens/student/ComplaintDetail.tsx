@@ -81,6 +81,11 @@ export default function ComplaintDetailScreen({ complaintId, onBack }: Complaint
       setComments([...comments, addedComment]);
       setNewComment("");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (Platform.OS === "web") {
+        window.alert("Comment Added Successfully.");
+      } else {
+        Alert.alert("Success", "Comment Added.");
+      }
     } catch (err: any) {
       Alert.alert("Comment Failed", err.message || "Failed to post your comment.");
     } finally {

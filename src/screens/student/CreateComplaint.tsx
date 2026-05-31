@@ -125,22 +125,31 @@ export default function CreateComplaintScreen({ onBack, onSubmitSuccess }: Creat
       });
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert(
-        "Complaint Filed",
-        "Your maintenance request has been submitted successfully and is now pending review.",
-        [
-          {
-            text: "Go to Dashboard",
-            onPress: () => {
-              if (onSubmitSuccess) {
-                onSubmitSuccess();
-              } else {
-                router.replace("/dashboard" as any);
-              }
+      if (Platform.OS === "web") {
+        window.alert("Complaint Filed\n\nYour maintenance request has been submitted successfully and is now pending review.");
+        if (onSubmitSuccess) {
+          onSubmitSuccess();
+        } else {
+          router.replace("/dashboard" as any);
+        }
+      } else {
+        Alert.alert(
+          "Complaint Filed",
+          "Your maintenance request has been submitted successfully and is now pending review.",
+          [
+            {
+              text: "Go to Dashboard",
+              onPress: () => {
+                if (onSubmitSuccess) {
+                  onSubmitSuccess();
+                } else {
+                  router.replace("/dashboard" as any);
+                }
+              },
             },
-          },
-        ]
-      );
+          ]
+        );
+      }
     } catch (err: any) {
       console.error("Submission failed:", err);
       Alert.alert("Submission Failed", err.message || "Failed to submit complaint. Please try again.");
