@@ -18,9 +18,9 @@ import * as Haptics from "expo-haptics";
 import { apiService } from "../../services/api";
 import { Room } from "../../types";
 import { Header } from "../../components/ui/Header";
-import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
+import { ResponsiveContainer } from "../../components/ui/ResponsiveContainer";
 import { Theme } from "../../constants/theme";
 
 interface RoomManagementProps {
@@ -211,6 +211,7 @@ export default function RoomManagementScreen({ onBack }: RoomManagementProps = {
       <StatusBar barStyle="light-content" />
       <Header title="Room Allocations" showBackButton onBack={onBack} />
 
+      <ResponsiveContainer>
       {/* Filters */}
       <View style={styles.filterContainer}>
         {renderFilterPill("all", "All Rooms")}
@@ -255,6 +256,7 @@ export default function RoomManagementScreen({ onBack }: RoomManagementProps = {
           }
         />
       )}
+      </ResponsiveContainer>
 
       {/* Add Room Modal */}
       <Modal
@@ -316,8 +318,8 @@ const styles = StyleSheet.create({
   },
   filterContainer: {
     flexDirection: "row",
-    paddingHorizontal: 20,
-    marginTop: 16,
+    paddingHorizontal: Theme.spacing.lg,
+    marginTop: Theme.spacing.md,
   },
   filterPill: {
     paddingHorizontal: 12,
@@ -349,9 +351,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 12,
+    paddingHorizontal: Theme.spacing.lg,
+    paddingTop: Theme.spacing.md,
+    paddingBottom: Theme.spacing.sm,
+    width: "100%",
   },
   title: {
     fontSize: 20,
@@ -384,11 +387,12 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingHorizontal: Theme.spacing.lg,
+    paddingBottom: Theme.spacing.xxl,
   },
   card: {
-    marginBottom: 12,
+    marginBottom: Theme.spacing.md,
+    width: "100%",
   },
   cardMaintenance: {
     backgroundColor: "#FFF9F2",

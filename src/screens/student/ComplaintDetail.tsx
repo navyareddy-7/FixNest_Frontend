@@ -23,6 +23,7 @@ import { Badge } from "../../components/ui/Badge";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import { StatusTimeline } from "../../components/ui/StatusTimeline";
+import { ResponsiveContainer } from "../../components/ui/ResponsiveContainer";
 import { Theme } from "../../constants/theme";
 
 interface ComplaintDetailProps {
@@ -107,6 +108,7 @@ export default function ComplaintDetailScreen({ complaintId, onBack }: Complaint
       <Header title="Ticket Details" showBackButton onBack={onBack} />
 
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+        <ResponsiveContainer>
         {/* Ticket Header Card */}
         <Card style={styles.card}>
           <View style={styles.rowBetween}>
@@ -195,6 +197,7 @@ export default function ComplaintDetailScreen({ complaintId, onBack }: Complaint
             variant="secondary"
           />
         </Card>
+        </ResponsiveContainer>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -217,11 +220,12 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   scrollContainer: {
-    padding: 16,
-    paddingBottom: 40,
+    padding: Theme.spacing.md,
+    paddingBottom: Theme.spacing.xxl,
   },
   card: {
-    marginBottom: 16,
+    marginBottom: Theme.spacing.md,
+    width: "100%",
   },
   rowBetween: {
     flexDirection: "row",

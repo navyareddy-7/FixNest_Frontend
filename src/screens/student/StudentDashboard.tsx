@@ -17,6 +17,7 @@ import { Complaint, ComplaintStatus, Notice } from "../../types";
 import { Header } from "../../components/ui/Header";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
+import { ResponsiveContainer } from "../../components/ui/ResponsiveContainer";
 import { Theme } from "../../constants/theme";
 import * as Haptics from "expo-haptics";
 import ProfileScreen from "../ProfileScreen";
@@ -210,6 +211,7 @@ export default function StudentDashboardScreen() {
     return (
       <View style={styles.container}>
         <Header title="Notice Board" showBackButton onBack={() => setActiveView("dashboard")} />
+        <ResponsiveContainer>
         {isNoticesLoading ? (
           <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
             <ActivityIndicator size="large" color={Theme.colors.primary} />
@@ -217,10 +219,10 @@ export default function StudentDashboardScreen() {
         ) : (
           <FlatList
             data={notices}
-            contentContainerStyle={{ padding: 20 }}
+            contentContainerStyle={{ padding: Theme.spacing.md }}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
-              <Card style={{ marginBottom: 14 }}>
+              <Card style={{ marginBottom: Theme.spacing.md }}>
                 <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                   <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4, backgroundColor: "#FFF3E0" }}>
                     <Text style={{ fontSize: 10, fontWeight: "800", color: Theme.colors.accent }}>
@@ -243,6 +245,7 @@ export default function StudentDashboardScreen() {
             }
           />
         )}
+        </ResponsiveContainer>
       </View>
     );
   }
@@ -276,6 +279,7 @@ export default function StudentDashboardScreen() {
         }
       />
 
+      <ResponsiveContainer>
       {/* Welcome Banner */}
       <View style={styles.welcomeBanner}>
         <View>
@@ -368,6 +372,7 @@ export default function StudentDashboardScreen() {
           }
         />
       )}
+      </ResponsiveContainer>
     </View>
   );
 }
@@ -384,9 +389,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 12,
+    paddingHorizontal: Theme.spacing.lg,
+    paddingTop: Theme.spacing.md,
+    paddingBottom: Theme.spacing.sm,
   },
   welcomeSubtitle: {
     fontSize: 13,
@@ -415,15 +420,15 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: "row",
     backgroundColor: "#FFFFFF",
-    marginHorizontal: 20,
+    marginHorizontal: Theme.spacing.lg,
     borderRadius: Theme.roundness.lg,
-    paddingVertical: 14,
+    paddingVertical: Theme.spacing.md,
     shadowColor: "#0A2A66",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
     shadowRadius: 8,
     elevation: 2,
-    marginBottom: 20,
+    marginBottom: Theme.spacing.md,
   },
   statBox: {
     flex: 1,
@@ -449,12 +454,12 @@ const styles = StyleSheet.create({
   },
   filterContainer: {
     flexDirection: "row",
-    paddingHorizontal: 20,
-    marginBottom: 16,
+    paddingHorizontal: Theme.spacing.lg,
+    marginBottom: Theme.spacing.md,
   },
   filterPill: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: Theme.spacing.md,
+    paddingVertical: Theme.spacing.sm,
     borderRadius: Theme.roundness.full,
     backgroundColor: "#FFFFFF",
     marginRight: 8,
@@ -480,15 +485,16 @@ const styles = StyleSheet.create({
   },
   loaderText: {
     color: Theme.colors.textLight,
-    marginTop: 10,
+    marginTop: Theme.spacing.md,
     fontWeight: "500",
   },
   listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingHorizontal: Theme.spacing.lg,
+    paddingBottom: Theme.spacing.xxl,
   },
   card: {
-    marginBottom: 14,
+    marginBottom: Theme.spacing.md,
+    width: "100%",
   },
   cardHeader: {
     flexDirection: "row",

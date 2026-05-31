@@ -24,6 +24,7 @@ import { Badge } from "../../components/ui/Badge";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import { StatusTimeline } from "../../components/ui/StatusTimeline";
+import { ResponsiveContainer } from "../../components/ui/ResponsiveContainer";
 import { Theme } from "../../constants/theme";
 
 interface WorkerTaskDetailProps {
@@ -184,6 +185,7 @@ export default function WorkerTaskDetailScreen({ taskId, onBack }: WorkerTaskDet
       <Header title="Assigned Job Details" showBackButton onBack={onBack} />
 
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+        <ResponsiveContainer>
         {/* Task Details Header */}
         <Card style={styles.card}>
           <View style={styles.rowBetween}>
@@ -306,6 +308,7 @@ export default function WorkerTaskDetailScreen({ taskId, onBack }: WorkerTaskDet
             textStyle={{ color: Theme.colors.secondary }}
           />
         </Card>
+        </ResponsiveContainer>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -328,11 +331,12 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   scrollContainer: {
-    padding: 16,
-    paddingBottom: 40,
+    padding: Theme.spacing.md,
+    paddingBottom: Theme.spacing.xxl,
   },
   card: {
-    marginBottom: 16,
+    marginBottom: Theme.spacing.md,
+    width: "100%",
   },
   rowBetween: {
     flexDirection: "row",

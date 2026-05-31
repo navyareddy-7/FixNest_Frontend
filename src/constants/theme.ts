@@ -84,5 +84,9 @@ export const Theme = {
       fontSize: 16,
       fontWeight: "700" as const
     }
+  },
+  layout: {
+    maxWidth: 1024,
+    screenPadding: 24
   }
 };

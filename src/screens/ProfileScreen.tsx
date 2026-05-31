@@ -17,6 +17,7 @@ import { Header } from "../components/ui/Header";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
+import { ResponsiveContainer } from "../components/ui/ResponsiveContainer";
 import { Theme } from "../constants/theme";
 
 interface ProfileScreenProps {
@@ -92,6 +93,7 @@ export default function ProfileScreen({ onBack }: ProfileScreenProps) {
       <Header title={isEditing ? "Edit Profile" : "My Profile"} showBackButton onBack={isEditing ? () => setIsEditing(false) : onBack} />
 
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+        <ResponsiveContainer>
         {/* User Card */}
         <Card style={styles.card}>
           <View style={styles.avatarRow}>
@@ -225,6 +227,7 @@ export default function ProfileScreen({ onBack }: ProfileScreenProps) {
           textStyle={{ color: Theme.colors.high, fontWeight: "700" }}
           style={styles.logoutBtn}
         />
+        </ResponsiveContainer>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -236,16 +239,17 @@ const styles = StyleSheet.create({
     backgroundColor: Theme.colors.background,
   },
   scrollContainer: {
-    padding: 16,
-    paddingBottom: 40,
+    padding: Theme.spacing.md,
+    paddingBottom: Theme.spacing.xxl,
   },
   card: {
-    marginBottom: 16,
+    marginBottom: Theme.spacing.md,
+    width: "100%",
   },
   avatarRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: Theme.spacing.sm,
   },
   avatar: {
     width: 64,
@@ -311,15 +315,16 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   logoutBtn: {
-    marginTop: 8,
+    marginTop: Theme.spacing.sm,
     height: 52,
     borderWidth: 1.5,
     borderColor: Theme.colors.high + "25",
+    width: "100%",
   },
   infoRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: Theme.spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: Theme.colors.border,
   },

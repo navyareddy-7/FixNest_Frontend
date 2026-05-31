@@ -18,9 +18,9 @@ import * as Haptics from "expo-haptics";
 import { apiService } from "../../services/api";
 import { Notice } from "../../types";
 import { Header } from "../../components/ui/Header";
-import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
+import { ResponsiveContainer } from "../../components/ui/ResponsiveContainer";
 import { Theme } from "../../constants/theme";
 
 interface NoticeManagementProps {
@@ -147,6 +147,7 @@ export default function NoticeManagementScreen({ onBack }: NoticeManagementProps
       <StatusBar barStyle="light-content" />
       <Header title="Notice Board Admin" showBackButton onBack={onBack} />
 
+      <ResponsiveContainer>
       <View style={styles.bannerRow}>
         <View>
           <Text style={styles.title}>Hostel Notices</Text>
@@ -183,6 +184,7 @@ export default function NoticeManagementScreen({ onBack }: NoticeManagementProps
           }
         />
       )}
+      </ResponsiveContainer>
 
       {/* Publish Notice Modal */}
       <Modal
@@ -259,9 +261,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 12,
+    paddingHorizontal: Theme.spacing.lg,
+    paddingTop: Theme.spacing.md,
+    paddingBottom: Theme.spacing.sm,
+    width: "100%",
   },
   title: {
     fontSize: 20,
@@ -294,11 +297,12 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingHorizontal: Theme.spacing.lg,
+    paddingBottom: Theme.spacing.xxl,
   },
   card: {
-    marginBottom: 14,
+    marginBottom: Theme.spacing.md,
+    width: "100%",
   },
   cardHeader: {
     flexDirection: "row",

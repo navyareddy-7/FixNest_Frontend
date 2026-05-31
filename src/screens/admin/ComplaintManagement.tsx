@@ -18,6 +18,7 @@ import { Complaint, User } from "../../types";
 import { Header } from "../../components/ui/Header";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
+import { ResponsiveContainer } from "../../components/ui/ResponsiveContainer";
 import { Theme } from "../../constants/theme";
 
 interface ComplaintManagementProps {
@@ -141,6 +142,7 @@ export default function ComplaintManagementScreen({ onBack }: ComplaintManagemen
       <StatusBar barStyle="light-content" />
       <Header title="Dispatch Control Board" showBackButton onBack={onBack} />
 
+      <ResponsiveContainer>
       <View style={styles.subBanner}>
         <Text style={styles.title}>All Tickets</Text>
         <Text style={styles.subtitle}>{complaints.length} maintenance tickets logged</Text>
@@ -165,6 +167,7 @@ export default function ComplaintManagementScreen({ onBack }: ComplaintManagemen
           }
         />
       )}
+      </ResponsiveContainer>
 
       {/* Dispatch Assignment Modal */}
       <Modal
@@ -234,9 +237,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   subBanner: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 12,
+    paddingHorizontal: Theme.spacing.lg,
+    paddingTop: Theme.spacing.md,
+    paddingBottom: Theme.spacing.sm,
+    width: "100%",
   },
   title: {
     fontSize: 20,
@@ -250,11 +254,12 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingHorizontal: Theme.spacing.lg,
+    paddingBottom: Theme.spacing.xxl,
   },
   card: {
-    marginBottom: 14,
+    marginBottom: Theme.spacing.md,
+    width: "100%",
   },
   cardHeader: {
     flexDirection: "row",

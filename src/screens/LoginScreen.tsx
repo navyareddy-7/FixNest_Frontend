@@ -14,6 +14,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
+import { ResponsiveContainer } from "../components/ui/ResponsiveContainer";
 import { Theme } from "../constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
@@ -116,6 +117,7 @@ export default function LoginScreen() {
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
+      <ResponsiveContainer>
       {/* Logo & Brand identity */}
       <View style={styles.brandContainer}>
         <Image
@@ -290,6 +292,7 @@ export default function LoginScreen() {
           FixNest is a secure internal operations system. Self-registration is restricted. Contact support for new accounts.
         </Text>
       </View>
+      </ResponsiveContainer>
     </ScrollView>
   );
 
@@ -338,11 +341,11 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    padding: 24,
+    padding: Theme.spacing.lg,
     justifyContent: "center",
     alignItems: "center",
-    paddingTop: Platform.OS === "ios" ? 64 : 40,
-    paddingBottom: 40,
+    paddingTop: Platform.OS === "ios" ? 64 : Theme.spacing.xxl,
+    paddingBottom: Theme.spacing.xxl,
   },
   brandContainer: {
     alignItems: "center",
@@ -425,8 +428,8 @@ const styles = StyleSheet.create({
     height: 52,
   },
   policyBanner: {
-    marginTop: 40,
-    width: "90%",
+    marginTop: Theme.spacing.xxl,
+    width: "100%",
   },
   policyText: {
     color: "#5C6F8E",

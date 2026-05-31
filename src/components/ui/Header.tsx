@@ -88,8 +88,8 @@ const styles = StyleSheet.create({
     backgroundColor: Theme.colors.primary,
   },
   header: {
-    paddingBottom: 16,
-    paddingHorizontal: 16,
+    paddingBottom: Theme.spacing.md,
+    paddingHorizontal: Theme.spacing.md,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,

@@ -15,6 +15,7 @@ import { apiService } from "../../services/api";
 import { Analytics } from "../../types";
 import { Header } from "../../components/ui/Header";
 import { Card } from "../../components/ui/Card";
+import { ResponsiveContainer } from "../../components/ui/ResponsiveContainer";
 import { Theme } from "../../constants/theme";
 import ProfileScreen from "../ProfileScreen";
 import ComplaintManagementScreen from "./ComplaintManagement";
@@ -138,6 +139,7 @@ export default function AdminDashboardScreen() {
           />
         }
       >
+        <ResponsiveContainer>
         <Text style={styles.welcomeSubtitle}>Performance Overview</Text>
         <Text style={styles.welcomeTitle}>FixNest Command Center</Text>
 
@@ -212,6 +214,7 @@ export default function AdminDashboardScreen() {
             ))
           )}
         </Card>
+        </ResponsiveContainer>
       </ScrollView>
     </View>
   );
@@ -237,8 +240,8 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   scrollContainer: {
-    padding: 20,
-    paddingBottom: 40,
+    padding: Theme.spacing.lg,
+    paddingBottom: Theme.spacing.xxl,
   },
   welcomeSubtitle: {
     fontSize: 13,
@@ -248,15 +251,15 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   welcomeTitle: {
-    fontSize: 24,
+    fontSize: Theme.typography.h2.fontSize,
     fontWeight: "800",
     color: Theme.colors.text,
     marginTop: 2,
-    marginBottom: 20,
+    marginBottom: Theme.spacing.lg,
   },
   actionGrid: {
     flexDirection: "row",
-    marginBottom: 20,
+    marginBottom: Theme.spacing.lg,
   },
   actionCard: {
     flex: 1,
@@ -299,14 +302,15 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   statLabel: {
-    fontSize: 11,
+    fontSize: Theme.typography.caption.fontSize,
     color: Theme.colors.textLight,
     fontWeight: "600",
-    marginTop: 4,
+    marginTop: Theme.spacing.xs,
     textTransform: "uppercase",
   },
   card: {
-    marginBottom: 16,
+    marginBottom: Theme.spacing.md,
+    width: "100%",
   },
   sectionTitle: {
     fontSize: 16,

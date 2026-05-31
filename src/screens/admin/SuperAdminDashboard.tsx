@@ -16,8 +16,8 @@ import { apiService } from "../../services/api";
 import { Hostel, User } from "../../types";
 import { Header } from "../../components/ui/Header";
 import { Card } from "../../components/ui/Card";
-import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
+import { ResponsiveContainer } from "../../components/ui/ResponsiveContainer";
 import { Theme } from "../../constants/theme";
 import ProfileScreen from "../ProfileScreen";
 
@@ -215,6 +215,7 @@ export default function SuperAdminDashboardScreen() {
       <View style={styles.container}>
         <Header title="Hostel Management" showBackButton onBack={() => setActiveView("dashboard")} />
         
+        <ResponsiveContainer>
         <View style={styles.bannerRow}>
           <View>
             <Text style={styles.title}>All Campus blocks</Text>
@@ -251,6 +252,7 @@ export default function SuperAdminDashboardScreen() {
             </Card>
           ))}
         </ScrollView>
+        </ResponsiveContainer>
 
         <Modal animationType="slide" transparent={true} visible={hostelModalVisible} onRequestClose={() => setHostelModalVisible(false)}>
           <View style={styles.modalOverlay}>
@@ -279,6 +281,7 @@ export default function SuperAdminDashboardScreen() {
       <View style={styles.container}>
         <Header title="Manage Admins" showBackButton onBack={() => setActiveView("dashboard")} />
         
+        <ResponsiveContainer>
         <View style={styles.bannerRow}>
           <View>
             <Text style={styles.title}>Hostel Admins</Text>
@@ -328,6 +331,7 @@ export default function SuperAdminDashboardScreen() {
             ))
           )}
         </ScrollView>
+        </ResponsiveContainer>
 
         <Modal animationType="slide" transparent={true} visible={adminModalVisible} onRequestClose={() => setAdminModalVisible(false)}>
           <View style={styles.modalOverlay}>
@@ -360,6 +364,7 @@ export default function SuperAdminDashboardScreen() {
     return (
       <View style={styles.container}>
         <Header title="Hostel Analytics" showBackButton onBack={() => setActiveView("dashboard")} />
+        <ResponsiveContainer>
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <Text style={styles.sectionTitle}>Problems vs Solved per Hostel</Text>
           <Text style={styles.cardDesc}>
@@ -405,6 +410,7 @@ export default function SuperAdminDashboardScreen() {
             )
           )}
         </ScrollView>
+        </ResponsiveContainer>
       </View>
     );
   }
@@ -421,6 +427,7 @@ export default function SuperAdminDashboardScreen() {
         }
       />
 
+      <ResponsiveContainer>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={styles.welcomeSubtitle}>Global Administration</Text>
         <Text style={styles.welcomeTitle}>FixNest Control Center</Text>
@@ -450,24 +457,25 @@ export default function SuperAdminDashboardScreen() {
           </View>
         </View>
       </ScrollView>
+      </ResponsiveContainer>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Theme.colors.background },
-  scrollContainer: { padding: 20, paddingBottom: 40 },
+  scrollContainer: { padding: Theme.spacing.lg, paddingBottom: Theme.spacing.xxl },
   welcomeSubtitle: { fontSize: 13, color: Theme.colors.textLight, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.5 },
-  welcomeTitle: { fontSize: 24, fontWeight: "800", color: Theme.colors.text, marginTop: 2, marginBottom: 20 },
+  welcomeTitle: { fontSize: Theme.typography.h2.fontSize, fontWeight: "800", color: Theme.colors.text, marginTop: 2, marginBottom: Theme.spacing.lg },
   gridContainer: { width: "100%" },
   gridRow: { flexDirection: "row" },
   gridCard: { flex: 1, borderRadius: Theme.roundness.lg, padding: 16, marginHorizontal: 4, shadowColor: "#0A2A66", shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.08, shadowRadius: 12, elevation: 4 },
   gridCardTitle: { color: "#FFFFFF", fontSize: 15, fontWeight: "700", marginTop: 12 },
   gridCardDesc: { color: "rgba(255,255,255,0.75)", fontSize: 11, marginTop: 2, fontWeight: "500" },
   sectionTitle: { fontSize: 16, fontWeight: "700", color: Theme.colors.text, marginBottom: 8 },
-  card: { marginBottom: 16 },
+  card: { marginBottom: Theme.spacing.md, width: "100%" },
   profileBtn: { padding: 4 },
-  bannerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12 },
+  bannerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: Theme.spacing.lg, paddingTop: Theme.spacing.md, paddingBottom: Theme.spacing.sm, width: "100%" },
   title: { fontSize: 20, fontWeight: "800", color: Theme.colors.text },
   subtitle: { fontSize: 13, color: Theme.colors.textLight, fontWeight: "500", marginTop: 2 },
   addBtn: { backgroundColor: Theme.colors.primary, flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 10, borderRadius: Theme.roundness.md, shadowColor: Theme.colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 3 },

@@ -19,6 +19,7 @@ import { apiService } from "../../services/api";
 import { Header } from "../../components/ui/Header";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
+import { ResponsiveContainer } from "../../components/ui/ResponsiveContainer";
 import { Theme } from "../../constants/theme";
 
 const CATEGORIES = ["Plumbing", "Electrical", "Carpentry", "Housekeeping", "Other"];
@@ -157,6 +158,7 @@ export default function CreateComplaintScreen({ onBack, onSubmitSuccess }: Creat
       <Header title="File Complaint" showBackButton onBack={onBack} />
 
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+        <ResponsiveContainer>
         <View style={styles.formCard}>
           <Text style={styles.sectionTitle}>Request Details</Text>
           
@@ -287,6 +289,7 @@ export default function CreateComplaintScreen({ onBack, onSubmitSuccess }: Creat
             style={styles.submitBtn}
           />
         </View>
+        </ResponsiveContainer>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -298,37 +301,38 @@ const styles = StyleSheet.create({
     backgroundColor: Theme.colors.background,
   },
   scrollContainer: {
-    padding: 16,
-    paddingBottom: 40,
+    padding: Theme.spacing.md,
+    paddingBottom: Theme.spacing.xxl,
   },
   formCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: Theme.roundness.lg,
-    padding: 20,
+    padding: Theme.spacing.md,
     shadowColor: "#0A2A66",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
     shadowRadius: 8,
     elevation: 2,
+    width: "100%",
   },
   sectionTitle: {
     fontSize: Theme.typography.h3.fontSize,
     fontWeight: "700",
     color: Theme.colors.text,
-    marginBottom: 16,
+    marginBottom: Theme.spacing.md,
   },
   label: {
     fontSize: Theme.typography.caption.fontSize,
     fontWeight: "600",
     color: Theme.colors.text,
-    marginBottom: 8,
+    marginBottom: Theme.spacing.sm,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   categoryGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginBottom: 16,
+    marginBottom: Theme.spacing.md,
   },
   categoryBtn: {
     paddingHorizontal: 12,

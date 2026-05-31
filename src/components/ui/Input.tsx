@@ -86,13 +86,13 @@ export const Input: React.FC<InputProps> = ({
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    marginBottom: 16,
+    marginBottom: Theme.spacing.md,
   },
   label: {
     fontSize: Theme.typography.caption.fontSize,
     fontWeight: "600",
     color: Theme.colors.text,
-    marginBottom: 6,
+    marginBottom: Theme.spacing.xs,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
@@ -102,13 +102,13 @@ const styles = StyleSheet.create({
     borderRadius: Theme.roundness.md,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: Theme.spacing.md,
     borderWidth: 1.5,
     borderColor: "transparent",
   },
   multilineContainer: {
     alignItems: "flex-start",
-    paddingTop: 12,
+    paddingTop: Theme.spacing.md,
   },
   focused: {
     borderColor: Theme.colors.secondary,
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF5F5",
   },
   icon: {
-    marginRight: 12,
+    marginRight: Theme.spacing.sm,
   },
   input: {
     flex: 1,
@@ -128,12 +128,12 @@ const styles = StyleSheet.create({
     color: Theme.colors.text,
   },
   rightIcon: {
-    padding: 4,
+    padding: Theme.spacing.xs,
   },
   errorText: {
     color: Theme.colors.high,
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: Theme.typography.caption.fontSize,
+    marginTop: Theme.spacing.xs,
     fontWeight: "500",
   },
 });

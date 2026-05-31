@@ -19,8 +19,8 @@ import { apiService } from "../../services/api";
 import { User } from "../../types";
 import { Header } from "../../components/ui/Header";
 import { Card } from "../../components/ui/Card";
-import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
+import { ResponsiveContainer } from "../../components/ui/ResponsiveContainer";
 import { Theme } from "../../constants/theme";
 
 interface UserManagementProps {
@@ -212,6 +212,7 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
       <StatusBar barStyle="light-content" />
       <Header title="User Management" showBackButton onBack={onBack} />
 
+      <ResponsiveContainer>
       {/* Role Tabs */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
@@ -279,6 +280,7 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
           }
         />
       )}
+      </ResponsiveContainer>
 
       {/* Account Creation Modal */}
       <Modal
@@ -382,8 +384,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     backgroundColor: "#F0F4FC",
     padding: 4,
-    marginHorizontal: 20,
-    marginTop: 16,
+    marginHorizontal: Theme.spacing.lg,
+    marginTop: Theme.spacing.md,
     borderRadius: Theme.roundness.md,
   },
   tab: {
@@ -418,9 +420,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 12,
+    paddingHorizontal: Theme.spacing.lg,
+    paddingTop: Theme.spacing.md,
+    paddingBottom: Theme.spacing.sm,
+    width: "100%",
   },
   title: {
     fontSize: 20,
@@ -451,11 +454,12 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingHorizontal: Theme.spacing.lg,
+    paddingBottom: Theme.spacing.xxl,
   },
   card: {
-    marginBottom: 12,
+    marginBottom: Theme.spacing.md,
+    width: "100%",
   },
   cardBlocked: {
     backgroundColor: "#FFEBEE",
