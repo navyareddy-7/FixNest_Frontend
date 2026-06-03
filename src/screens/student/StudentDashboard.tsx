@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,6 @@ import {
   RefreshControl,
   StatusBar,
 } from "react-native";
-import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../context/AuthContext";
 import { apiService } from "../../services/api";
@@ -20,12 +19,14 @@ import { Badge } from "../../components/ui/Badge";
 import { ResponsiveContainer } from "../../components/ui/ResponsiveContainer";
 import { Theme } from "../../constants/theme";
 import * as Haptics from "expo-haptics";
+import { useBackHandler } from "../../hooks/useBackHandler";
 import ProfileScreen from "../ProfileScreen";
 import CreateComplaintScreen from "./CreateComplaint";
 import ComplaintDetailScreen from "./ComplaintDetail";
+import EmergencySOSScreen from "./EmergencySOSScreen";
 
 export default function StudentDashboardScreen() {
-  const [activeView, setActiveView] = useState<"dashboard" | "create" | "profile" | "detail" | "notices">("dashboard");
+  const [activeView, setActiveView] = useState<"dashboard" | "create" | "profile" | "detail" | "notices" | "sos">("dashboard");
   const [selectedComplaintId, setSelectedComplaintId] = useState<number | null>(null);
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [filteredComplaints, setFilteredComplaints] = useState<Complaint[]>([]);
@@ -36,7 +37,19 @@ export default function StudentDashboardScreen() {
   const [isNoticesLoading, setIsNoticesLoading] = useState(false);
   
   const { user } = useAuth();
-  const router = useRouter();
+
+  // ─── Android hardware back button ─────────────────────────────────────────
+  // Priority: detail/create/notices/profile → go back to dashboard
+  // On dashboard itself → let the OS handle (exit app)
+  useBackHandler(
+    useCallback(() => {
+      if (activeView !== "dashboard") {
+        setActiveView("dashboard");
+        return true; // consumed
+      }
+      return false; // let OS handle (exit app)
+    }, [activeView])
+  );
 
   const fetchComplaints = async (isRefreshing = false) => {
     if (!isRefreshing) setIsLoading(true);
@@ -179,6 +192,10 @@ export default function StudentDashboardScreen() {
   };
 
   // State-driven view rendering
+  if (activeView === "sos") {
+    return <EmergencySOSScreen onBack={() => setActiveView("dashboard")} />;
+  }
+
   if (activeView === "profile") {
     return <ProfileScreen onBack={() => setActiveView("dashboard")} />;
   }
@@ -280,6 +297,20 @@ export default function StudentDashboardScreen() {
       />
 
       <ResponsiveContainer>
+      {/* Emergency SOS strip — always visible */}
+      <TouchableOpacity
+        style={styles.sosStrip}
+        onPress={() => {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          setActiveView("sos");
+        }}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="alert-circle" size={22} color="#FFFFFF" />
+        <Text style={styles.sosStripText}>🚨 EMERGENCY SOS</Text>
+        <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.7)" />
+      </TouchableOpacity>
+
       {/* Welcome Banner */}
       <View style={styles.welcomeBanner}>
         <View>
@@ -384,6 +415,31 @@ const styles = StyleSheet.create({
   },
   profileBtn: {
     padding: 4,
+  },
+  // ── Emergency SOS strip ──
+  sosStrip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#DC2626",
+    marginHorizontal: Theme.spacing.lg,
+    marginTop: Theme.spacing.md,
+    marginBottom: Theme.spacing.xs,
+    borderRadius: Theme.roundness.md,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 10,
+    shadowColor: "#DC2626",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  sosStripText: {
+    color: "#FFFFFF",
+    fontWeight: "900",
+    fontSize: 16,
+    letterSpacing: 0.5,
+    flex: 1,
   },
   welcomeBanner: {
     flexDirection: "row",

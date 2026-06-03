@@ -13,6 +13,7 @@ export interface User {
   room_id?: number;
   room_number?: string;
   hostel_id?: number;
+  hostel_name?: string;   // resolved hostel name from backend join
   created_at: string;
 }
 
@@ -98,4 +99,47 @@ export interface Room {
   capacity: number;
   occupied: number;
   status: "available" | "full" | "maintenance";
+}
+
+// ─── Emergency SOS ──────────────────────────────────────────────────────────
+export type EmergencyStatus = "active" | "acknowledged" | "resolved" | "cancelled";
+export type EmergencyType =
+  | "stuck_lift"
+  | "fire"
+  | "medical"
+  | "electrical"
+  | "water_leakage"
+  | "security"
+  | "locked_room"
+  | "other";
+
+export interface EmergencyUserInfo {
+  id: number;
+  full_name: string;
+  email: string;
+  phone_number: string | null;
+  role?: string;
+}
+
+export interface Emergency {
+  id: number;
+  ticket_number: string;
+  emergency_type: EmergencyType;
+  description: string | null;
+  hostel_name: string;
+  room_number: string;
+  hostel_id: number | null;
+  room_id: number | null;
+  status: EmergencyStatus;
+  escalation_level: number;
+  student_id: number;
+  assigned_technician_id: number | null;
+  assigned_warden_id: number | null;
+  student: EmergencyUserInfo | null;
+  assigned_technician: EmergencyUserInfo | null;
+  assigned_warden: EmergencyUserInfo | null;
+  created_at: string;
+  acknowledged_at: string | null;
+  resolved_at: string | null;
+  updated_at: string;
 }
