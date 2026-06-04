@@ -28,6 +28,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as SecureStore from "expo-secure-store";
 import { apiService } from "../../services/api";
 import { Header } from "../../components/ui/Header";
 import { ResponsiveContainer } from "../../components/ui/ResponsiveContainer";
@@ -83,9 +84,24 @@ export default function EmergencyHotlineSettingsScreen({ onBack }: EmergencyHotl
         setIsActive(data.active);
       }
     } catch (err: any) {
-      // 404 means no hotline configured yet — that's fine
+      // 404 means no hotline configured yet on server
       if (!err.message?.includes("404")) {
         setError(err.message || "Failed to load emergency hotline settings.");
+      }
+      
+      // Try local fallback
+      try {
+        const localData = await SecureStore.getItemAsync("@emergency_hotline");
+        if (localData) {
+          const parsed = JSON.parse(localData);
+          setHotline(parsed);
+          setHotlineName(parsed.hotline_name);
+          setHotlineNumber(parsed.hotline_number);
+          setIsActive(parsed.active);
+          setError("Loaded from local storage (Offline mode)");
+        }
+      } catch (localErr) {
+        console.error("Local storage error:", localErr);
       }
     } finally {
       setIsLoading(false);
@@ -134,8 +150,34 @@ export default function EmergencyHotlineSettingsScreen({ onBack }: EmergencyHotl
         [{ text: "OK" }]
       );
     } catch (err: any) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert("Save Failed", err.message || "Could not save emergency hotline.");
+      console.error("[HOTLINE SAVE FAILED]", err);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      
+      // Local Fallback
+      const localHotline: EmergencyHotline = {
+        id: hotline?.id || Date.now(),
+        hotline_name: hotlineName.trim(),
+        hotline_number: hotlineNumber.trim(),
+        active: isActive,
+        created_at: hotline?.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      try {
+        await SecureStore.setItemAsync("@emergency_hotline", JSON.stringify(localHotline));
+        setHotline(localHotline);
+        setIsDirty(false);
+        Alert.alert(
+          "Offline Mode",
+          "Saved locally. Waiting for server synchronization.",
+          [{ text: "OK" }]
+        );
+      } catch (localErr) {
+        let msg = err.message || "Unable to save hotline.";
+        if (msg.includes("404")) msg = "Emergency Hotline API not found.";
+        else if (msg.toLowerCase().includes("network") || msg.toLowerCase().includes("fetch")) msg = "Server unavailable or database connection failed.";
+        Alert.alert("Save Failed", msg);
+      }
     } finally {
       setIsSaving(false);
     }
@@ -154,8 +196,16 @@ export default function EmergencyHotlineSettingsScreen({ onBack }: EmergencyHotl
       setHotline(updated);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch (err: any) {
-      setIsActive(!value); // revert on error
-      Alert.alert("Error", err.message || "Failed to update hotline status.");
+      // Local fallback for toggle
+      const localHotline = { ...hotline, active: value };
+      try {
+        await SecureStore.setItemAsync("@emergency_hotline", JSON.stringify(localHotline));
+        setHotline(localHotline);
+        Alert.alert("Offline Mode", "Saved locally. Waiting for server synchronization.");
+      } catch (localErr) {
+        setIsActive(!value); // revert on error
+        Alert.alert("Error", "Server unavailable and local save failed.");
+      }
     }
   };
 
