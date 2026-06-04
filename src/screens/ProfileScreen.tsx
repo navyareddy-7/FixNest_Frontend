@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
 import { ResponsiveContainer } from "../components/ui/ResponsiveContainer";
 import { Theme } from "../constants/theme";
+import { useBackHandler } from "../hooks/useBackHandler";
 
 interface ProfileScreenProps {
   onBack?: () => void;
@@ -32,7 +33,22 @@ export default function ProfileScreen({ onBack }: ProfileScreenProps) {
   
   const [isEditing, setIsEditing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [pushTokenRegistered, setPushTokenRegistered] = useState(!!user?.push_token);
+
+  // ─── Android hardware back button ─────────────────────────────────────────
+  // Mirrors the visual back button: cancel edit first, then navigate away.
+  useBackHandler(
+    useCallback(() => {
+      if (isEditing) {
+        setIsEditing(false);
+        return true; // consumed — stay on ProfileScreen in view mode
+      }
+      if (onBack) {
+        onBack();
+        return true;
+      }
+      return false; // no parent — let OS handle
+    }, [isEditing, onBack])
+  );
 
   const handleUpdateProfile = async () => {
     if (!fullName.trim()) {
@@ -119,6 +135,11 @@ export default function ProfileScreen({ onBack }: ProfileScreenProps) {
               <Text style={styles.userRole}>
                 Role: {user?.role ? String(user.role).replace("_", " ").toUpperCase() : "STUDENT"}
               </Text>
+              {user?.role === "worker" && user?.staff_category && (
+                <Text style={[styles.userRole, { color: Theme.colors.primary }]}>
+                  {user.staff_category}
+                </Text>
+              )}
               <Text style={styles.userEmail}>{user?.email}</Text>
             </View>
           </View>
@@ -207,6 +228,14 @@ export default function ProfileScreen({ onBack }: ProfileScreenProps) {
                     <Ionicons name="business-outline" size={18} color={Theme.colors.textLight} />
                     <Text style={styles.infoLabel}>Room Number:</Text>
                     <Text style={styles.infoValue}>{user?.room_number}</Text>
+                  </View>
+                )}
+
+                {user?.role === "worker" && user?.staff_category && (
+                  <View style={styles.infoRow}>
+                    <Ionicons name="construct-outline" size={18} color={Theme.colors.textLight} />
+                    <Text style={styles.infoLabel}>Staff Category:</Text>
+                    <Text style={styles.infoValue}>{user?.staff_category}</Text>
                   </View>
                 )}
 

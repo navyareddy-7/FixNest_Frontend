@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -24,6 +24,7 @@ import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { ResponsiveContainer } from "../../components/ui/ResponsiveContainer";
 import { Theme } from "../../constants/theme";
+import { useBackHandler } from "../../hooks/useBackHandler";
 
 interface RoomManagementProps {
   onBack?: () => void;
@@ -42,6 +43,22 @@ export default function RoomManagementScreen({ onBack }: RoomManagementProps = {
   const [capacity, setCapacity] = useState("4");
   const [hostelId, setHostelId] = useState("1");
   const { user } = useAuth();
+
+  // ─── Android hardware back button ─────────────────────────────────────────
+  // Priority: close add-room modal first, then call onBack
+  useBackHandler(
+    useCallback(() => {
+      if (modalVisible) {
+        setModalVisible(false);
+        return true;
+      }
+      if (onBack) {
+        onBack();
+        return true;
+      }
+      return false;
+    }, [modalVisible, onBack])
+  );
 
   const fetchRooms = async () => {
     setIsLoading(true);

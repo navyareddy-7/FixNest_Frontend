@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -23,6 +23,7 @@ import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { ResponsiveContainer } from "../../components/ui/ResponsiveContainer";
 import { Theme } from "../../constants/theme";
+import { useBackHandler } from "../../hooks/useBackHandler";
 
 interface NoticeManagementProps {
   onBack?: () => void;
@@ -33,6 +34,22 @@ export default function NoticeManagementScreen({ onBack }: NoticeManagementProps
   const [isLoading, setIsLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+
+  // ─── Android hardware back button ─────────────────────────────────────────
+  // Priority: close publish modal first, then call onBack
+  useBackHandler(
+    useCallback(() => {
+      if (modalVisible) {
+        setModalVisible(false);
+        return true;
+      }
+      if (onBack) {
+        onBack();
+        return true;
+      }
+      return false;
+    }, [modalVisible, onBack])
+  );
 
   // Form State
   const [title, setTitle] = useState("");
@@ -98,7 +115,8 @@ export default function NoticeManagementScreen({ onBack }: NoticeManagementProps
       if (window.confirm("Remove Announcement\n\nAre you sure you want to permanently delete this notice?")) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         apiService.delete(`/notices/${id}`).then(() => {
-          setNotices(notices.filter((n) => n.id !== id));
+          // Use functional update to avoid stale closure over notices array
+          setNotices((prev) => prev.filter((n) => n.id !== id));
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           window.alert("Notice Removed Successfully");
         }).catch((err: any) => {
@@ -118,7 +136,8 @@ export default function NoticeManagementScreen({ onBack }: NoticeManagementProps
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               try {
                 await apiService.delete(`/notices/${id}`);
-                setNotices(notices.filter((n) => n.id !== id));
+                // Use functional update to avoid stale closure over notices array
+                setNotices((prev) => prev.filter((n) => n.id !== id));
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               } catch (err: any) {
                 Alert.alert("Error", err.message || "Failed to delete notice from database.");

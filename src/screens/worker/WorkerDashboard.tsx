@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,6 @@ import {
   RefreshControl,
   StatusBar,
 } from "react-native";
-import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../context/AuthContext";
 import { apiService } from "../../services/api";
@@ -19,6 +18,7 @@ import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { ResponsiveContainer } from "../../components/ui/ResponsiveContainer";
 import { Theme } from "../../constants/theme";
+import { useBackHandler } from "../../hooks/useBackHandler";
 import ProfileScreen from "../ProfileScreen";
 import WorkerTaskDetailScreen from "./WorkerTaskDetail";
 
@@ -32,7 +32,18 @@ export default function WorkerDashboardScreen() {
   const [activeFilter, setActiveFilter] = useState<"all" | ComplaintStatus>("all");
   
   const { user } = useAuth();
-  const router = useRouter();
+
+  // ─── Android hardware back button ─────────────────────────────────────────
+  // priority: detail/profile → dashboard. On dashboard → OS handles (exit)
+  useBackHandler(
+    useCallback(() => {
+      if (activeView !== "dashboard") {
+        setActiveView("dashboard");
+        return true;
+      }
+      return false;
+    }, [activeView])
+  );
 
   const fetchTasks = async (isRefreshing = false) => {
     if (!isRefreshing) setIsLoading(true);

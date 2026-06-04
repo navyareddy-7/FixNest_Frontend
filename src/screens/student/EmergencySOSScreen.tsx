@@ -33,6 +33,10 @@ import { Emergency, EmergencyType, EmergencyContacts } from "../../types";
 import { Header } from "../../components/ui/Header";
 import { Theme } from "../../constants/theme";
 import { useBackHandler } from "../../hooks/useBackHandler";
+import { ContactCard } from "../../components/ui/emergency/ContactCard";
+import { EmergencySummaryCard } from "../../components/ui/emergency/EmergencySummaryCard";
+import { EmergencyTimeline } from "../../components/ui/emergency/EmergencyTimeline";
+import { EmergencyActionButton } from "../../components/ui/emergency/EmergencyActionButton";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const HOLD_DURATION_MS = 2000;
@@ -615,40 +619,24 @@ function StatusPhase({
   isCancelling: boolean;
 }) {
   const catMeta = CATEGORIES.find(c => c.type === emergency.emergency_type);
-  const pulse = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    if (emergency.status === "active") {
-      const anim = Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulse, { toValue: 1.08, duration: 700, useNativeDriver: true }),
-          Animated.timing(pulse, { toValue: 1, duration: 700, useNativeDriver: true }),
-        ])
-      );
-      anim.start();
-      return () => anim.stop();
-    }
-  }, [emergency.status]);
-
-  const statusColor: Record<string, string> = {
-    active:       "#DC2626",
-    acknowledged: "#D97706",
-    resolved:     "#16A34A",
-    cancelled:    "#6B7280",
-  };
-  const statusLabel: Record<string, string> = {
-    active:       "🔴 ACTIVE — Awaiting Response",
-    acknowledged: "🟡 ACKNOWLEDGED — Help on the way",
-    resolved:     "🟢 RESOLVED — Emergency closed",
-    cancelled:    "⚫ CANCELLED",
-  };
 
   const callNumber = (phone: string | null | undefined, label: string) => {
     if (!phone) {
       Alert.alert("Not available", `No ${label} contact info on file.`);
       return;
     }
-    Linking.openURL(`tel:${phone}`);
+    Linking.openURL(phone.startsWith("tel:") ? phone : `tel:${phone}`);
+  };
+
+  const handleCancelPrompt = () => {
+    Alert.alert(
+      "Cancel False Alarm?",
+      "Are you sure you want to cancel this emergency alert? This action cannot be undone.",
+      [
+        { text: "No, Keep Active", style: "cancel" },
+        { text: "Yes, Cancel Alert", style: "destructive", onPress: onCancel },
+      ]
+    );
   };
 
   return (
@@ -656,322 +644,92 @@ function StatusPhase({
       contentContainerStyle={statStyles.container}
       showsVerticalScrollIndicator={false}
     >
-      {/* Alert sent confirmation */}
-      <View style={statStyles.sentBanner}>
-        <Ionicons name="checkmark-circle" size={32} color="#FFFFFF" />
-        <Text style={statStyles.sentTitle}>Emergency Alert Sent!</Text>
-        <Text style={statStyles.sentSub}>All available staff have been notified.</Text>
-      </View>
+      <EmergencySummaryCard
+        emergency={emergency}
+        categoryLabel={catMeta?.label ?? emergency.emergency_type}
+      />
 
-      {/* Ticket card */}
-      <View style={statStyles.ticketCard}>
-        <View style={statStyles.ticketRow}>
-          <Text style={statStyles.ticketLabel}>EMERGENCY TICKET</Text>
-          <Text style={statStyles.ticketNum}>{emergency.ticket_number}</Text>
-        </View>
+      <EmergencyTimeline
+        status={emergency.status}
+        createdAt={emergency.created_at}
+        assignedAt={emergency.updated_at} // Note: simplified assignment mock
+      />
 
-        {/* Status badge */}
-        <Animated.View
-          style={[
-            statStyles.statusBadge,
-            {
-              backgroundColor: statusColor[emergency.status] + "18",
-              borderColor: statusColor[emergency.status],
-              transform: emergency.status === "active" ? [{ scale: pulse }] : [],
-            },
-          ]}
-        >
-          <View style={[statStyles.statusDot, { backgroundColor: statusColor[emergency.status] }]} />
-          <Text style={[statStyles.statusText, { color: statusColor[emergency.status] }]}>
-            {statusLabel[emergency.status] ?? emergency.status.toUpperCase()}
-          </Text>
-        </Animated.View>
-
-        <View style={statStyles.infoGrid}>
-          <InfoItem icon="construct-outline" label="Emergency Type" value={catMeta?.label ?? emergency.emergency_type} />
-          <InfoItem icon="business-outline"  label="Hostel"         value={emergency.hostel_name || "—"} />
-          <InfoItem icon="bed-outline"       label="Room"           value={emergency.room_number  || "—"} />
-          <InfoItem icon="calendar-outline"  label="Time"
-            value={new Date(emergency.created_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-          />
-        </View>
-      </View>
-
-      {/* Assigned technician */}
-      <View style={statStyles.sectionCard}>
-        <Text style={statStyles.sectionTitle}>Assigned Technician</Text>
-        {emergency.assigned_technician ? (
-          <>
-            <View style={statStyles.contactRow}>
-              <View style={statStyles.avatar}>
-                <Text style={statStyles.avatarText}>
-                  {emergency.assigned_technician.full_name.charAt(0).toUpperCase()}
-                </Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={statStyles.contactName}>{emergency.assigned_technician.full_name}</Text>
-                <Text style={statStyles.contactPhone}>
-                  {emergency.assigned_technician.phone_number ?? "No contact info"}
-                </Text>
-              </View>
-            </View>
-            <TouchableOpacity
-              style={statStyles.callBtn}
-              onPress={() => callNumber(emergency.assigned_technician?.phone_number, "technician")}
-            >
-              <Ionicons name="call" size={18} color="#FFFFFF" />
-              <Text style={statStyles.callBtnText}>📞 Call Technician</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <View style={statStyles.awaitingRow}>
-            <Ionicons name="time-outline" size={20} color="#D97706" />
-            <Text style={statStyles.awaitingText}>Assigning nearest technician…</Text>
-          </View>
-        )}
-      </View>
-
-      {/* Emergency Contacts — sourced from live API */}
-      <View style={statStyles.sectionCard}>
+      {/* Emergency Contacts */}
+      <View style={statStyles.sectionContainer}>
         <Text style={statStyles.sectionTitle}>Emergency Contacts</Text>
 
-        {/* Warden (Admin profile) */}
-        <ContactCallRow
+        {/* Assigned Technician or General Technician Contact */}
+        <ContactCard
+          label={emergency.assigned_technician ? "Assigned Technician" : "Technician"}
+          name={emergency.assigned_technician?.full_name ?? contacts?.technician?.name ?? null}
+          phone={emergency.assigned_technician?.phone_number ?? contacts?.technician?.phone ?? null}
+          color={Theme.colors.secondary}
+          icon="construct-outline"
+          onCall={() => callNumber(emergency.assigned_technician?.phone_number ?? contacts?.technician?.phone, "technician")}
+        />
+
+        {/* Warden */}
+        <ContactCard
           label="Warden"
           name={contacts?.warden?.name ?? null}
           phone={contacts?.warden?.phone ?? null}
           color="#7C3AED"
           icon="person-circle-outline"
+          onCall={() => callNumber(contacts?.warden?.phone, "warden")}
         />
 
-        {/* Technician (Staff profile) */}
-        {!emergency.assigned_technician && (
-          <ContactCallRow
-            label="Technician"
-            name={contacts?.technician?.name ?? null}
-            phone={contacts?.technician?.phone ?? null}
-            color={Theme.colors.secondary}
-            icon="construct-outline"
-          />
-        )}
-
-        {/* Emergency Hotline (Admin-configured) */}
-        <ContactCallRow
-          label={contacts?.hotline?.name ?? "Emergency Hotline"}
-          name={contacts?.hotline?.name ?? "Emergency Hotline"}
+        {/* Hotline */}
+        <ContactCard
+          label="Emergency Hotline"
+          name={contacts?.hotline?.name ?? "Hostel Emergency Control Room"}
           phone={contacts?.hotline?.phone ?? null}
           color="#DC2626"
           icon="call-outline"
           isHotline
+          onCall={() => callNumber(contacts?.hotline?.phone, "hotline")}
         />
       </View>
 
-      {/* Cancel false alarm */}
+      {/* Cancel False Alarm */}
       {emergency.status !== "resolved" && emergency.status !== "cancelled" && (
-        <TouchableOpacity
-          style={statStyles.cancelBtn}
-          onPress={onCancel}
-          disabled={isCancelling}
-        >
-          {isCancelling ? (
-            <ActivityIndicator color="#6B7280" size="small" />
-          ) : (
-            <>
-              <Ionicons name="close-circle-outline" size={18} color="#6B7280" />
-              <Text style={statStyles.cancelBtnText}>❌ Cancel — False Alarm</Text>
-            </>
-          )}
-        </TouchableOpacity>
+        <View style={statStyles.cancelSection}>
+          <EmergencyActionButton
+            icon="close-circle-outline"
+            label={isCancelling ? "Cancelling..." : "Cancel False Alarm"}
+            color="#6B7280"
+            onPress={handleCancelPrompt}
+            disabled={isCancelling}
+            outlined
+          />
+        </View>
       )}
     </ScrollView>
   );
 }
 
-function InfoItem({ icon, label, value }: { icon: any; label: string; value: string }) {
-  return (
-    <View style={statStyles.infoRow}>
-      <Ionicons name={icon} size={15} color={Theme.colors.textLight} style={{ marginRight: 8 }} />
-      <Text style={statStyles.infoLabel}>{label}:</Text>
-      <Text style={statStyles.infoValue} numberOfLines={1}>{value}</Text>
-    </View>
-  );
-}
-
-// ─── ContactCallRow ───────────────────────────────────────────────────────────
-// Renders a contact card with name, phone and a call button.
-// Used for Warden, Technician, and Hotline in the StatusPhase.
-function ContactCallRow({
-  label,
-  name,
-  phone,
-  color,
-  icon,
-  isHotline = false,
-}: {
-  label: string;
-  name: string | null;
-  phone: string | null;
-  color: string;
-  icon: React.ComponentProps<typeof Ionicons>["name"];
-  isHotline?: boolean;
-}) {
-  const displayName  = name  ?? (isHotline ? "Not configured" : "Not assigned");
-  const displayPhone = phone ?? "No number on file";
-  const canCall      = !!phone;
-
-  const handleCall = () => {
-    if (!phone) {
-      Alert.alert(
-        "No Number Available",
-        isHotline
-          ? "The emergency hotline has not been configured by the admin yet. Please use the warden or technician contact."
-          : `No phone number is on file for the ${label}.`
-      );
-      return;
-    }
-    const dialUri = phone.startsWith("tel:") ? phone : `tel:${phone}`;
-    Linking.openURL(dialUri);
-  };
-
-  return (
-    <View style={statStyles.contactBlock}>
-      <View style={statStyles.contactRow}>
-        <View style={[statStyles.contactIconBox, { backgroundColor: color + "18" }]}>
-          <Ionicons name={icon} size={20} color={color} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={statStyles.contactLabel}>{label}</Text>
-          <Text style={statStyles.contactName}>{displayName}</Text>
-          <Text style={[statStyles.contactPhone, !phone && { color: "#9CA3AF" }]}>
-            {displayPhone}
-          </Text>
-        </View>
-      </View>
-      <TouchableOpacity
-        style={[
-          statStyles.callBtn,
-          { backgroundColor: canCall ? color : "#9CA3AF" },
-        ]}
-        onPress={handleCall}
-        activeOpacity={0.85}
-      >
-        <Ionicons name="call" size={16} color="#FFFFFF" />
-        <Text style={statStyles.callBtnText}>📞 Call {label}</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
 const statStyles = StyleSheet.create({
-  container: { padding: 20, paddingBottom: 60, backgroundColor: Theme.colors.background },
-  sentBanner: {
-    backgroundColor: "#991B1B",
-    borderRadius: Theme.roundness.lg,
-    padding: 24,
-    alignItems: "center",
+  container: {
+    padding: 16,
+    paddingBottom: 40,
+    backgroundColor: Theme.colors.background,
+  },
+  sectionContainer: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: Theme.colors.text,
     marginBottom: 16,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
-  sentTitle: { fontSize: 20, fontWeight: "900", color: "#FFFFFF", marginTop: 8 },
-  sentSub:   { fontSize: 13, color: "rgba(255,255,255,0.8)", marginTop: 4, fontWeight: "500" },
-
-  ticketCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: Theme.roundness.lg,
-    padding: 16,
-    marginBottom: 14,
-    borderWidth: 1.5,
-    borderColor: "#FECACA",
-    shadowColor: "#DC2626",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+  cancelSection: {
+    marginTop: 8,
   },
-  ticketRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-  ticketLabel: { fontSize: 11, fontWeight: "800", color: "#DC2626", letterSpacing: 1, textTransform: "uppercase" },
-  ticketNum:   { fontSize: 15, fontWeight: "900", color: Theme.colors.text, letterSpacing: 0.5 },
-  statusBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    gap: 8,
-    marginBottom: 14,
-    alignSelf: "flex-start",
-  },
-  statusDot: { width: 8, height: 8, borderRadius: 4 },
-  statusText: { fontSize: 12, fontWeight: "800", letterSpacing: 0.3 },
-  infoGrid: { gap: 2 },
-  infoRow: { flexDirection: "row", alignItems: "center", paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: "#F3F4F6" },
-  infoLabel: { fontSize: 13, color: Theme.colors.textLight, fontWeight: "600", marginRight: 6 },
-  infoValue: { fontSize: 13, fontWeight: "700", color: Theme.colors.text, flex: 1 },
-
-  sectionCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: Theme.roundness.lg,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: Theme.colors.border,
-  },
-  sectionTitle: { fontSize: 14, fontWeight: "800", color: Theme.colors.text, marginBottom: 12 },
-
-  contactBlock: {
-    borderBottomWidth: 1,
-    borderBottomColor: Theme.colors.border,
-    paddingBottom: 14,
-    marginBottom: 14,
-  },
-  contactRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 10 },
-  contactIconBox: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  contactLabel: { fontSize: 11, fontWeight: "700", color: Theme.colors.textLight, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2 },
-  contactName:  { fontSize: 14, fontWeight: "700", color: Theme.colors.text },
-  contactPhone: { fontSize: 12, color: Theme.colors.textLight, marginTop: 2 },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Theme.colors.primary + "22",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  avatarText: { fontSize: 18, fontWeight: "700", color: Theme.colors.primary },
-
-  callBtn: {
-    backgroundColor: Theme.colors.resolved,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: Theme.roundness.md,
-  },
-  callBtnText: { color: "#FFFFFF", fontWeight: "800", fontSize: 15 },
-
-  awaitingRow: { flexDirection: "row", alignItems: "center", gap: 8, padding: 8, backgroundColor: "#FFFBEB", borderRadius: 8 },
-  awaitingText: { fontSize: 13, color: "#D97706", fontWeight: "600", flex: 1 },
-
-  cancelBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: Theme.roundness.md,
-    borderWidth: 1.5,
-    borderColor: "#D1D5DB",
-    backgroundColor: "#F9FAFB",
-  },
-  cancelBtnText: { color: "#6B7280", fontWeight: "700", fontSize: 14 },
 });
+
 
 // ─── Offline Fallback Phase ───────────────────────────────────────────────────
 // Shown when the SOS API is unreachable. Student can still call directly.

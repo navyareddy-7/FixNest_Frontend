@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   Platform,
   StatusBar,
   ScrollView,
+  TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -22,8 +23,11 @@ import { Header } from "../../components/ui/Header";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
+import { Dropdown } from "../../components/ui/Dropdown";
 import { ResponsiveContainer } from "../../components/ui/ResponsiveContainer";
 import { Theme } from "../../constants/theme";
+import { useBackHandler } from "../../hooks/useBackHandler";
+import { UserProfileModal } from "./UserProfileModal";
 
 interface UserManagementProps {
   onBack?: () => void;
@@ -35,6 +39,15 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
   const [workers, setWorkers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
+
+  // Profile modal state
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Registration Form State
   const [fullName, setFullName] = useState("");
@@ -43,8 +56,12 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
   const [password, setPassword] = useState("");
   const [hostelName, setHostelName] = useState("");
   const [roomNumber, setRoomNumber] = useState("");
+  const [staffCategory, setStaffCategory] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("All Categories");
   const [isRegistering, setIsRegistering] = useState(false);
   const { user } = useAuth();
+  // Ref to track the modal close animation timeout so it can be cancelled on unmount
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -70,7 +87,107 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
   useEffect(() => {
     fetchUsers();
   }, []);
- 
+
+  // Clean up debounce and modal close timeouts on unmount to prevent setState on unmounted component
+  useEffect(() => {
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    };
+  }, []);
+
+  // ─── Android hardware back button ─────────────────────────────────────────
+  // Priority: 1. Close profile modal, 2. Close create modal, 3. Call onBack
+  useBackHandler(
+    useCallback(() => {
+      if (profileModalVisible) {
+        setProfileModalVisible(false);
+        if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+        closeTimeoutRef.current = setTimeout(() => setSelectedUser(null), 400);
+        return true;
+      }
+      if (modalVisible) {
+        setModalVisible(false);
+        return true;
+      }
+      if (onBack) {
+        onBack();
+        return true;
+      }
+      return false;
+    }, [profileModalVisible, modalVisible, onBack])
+  );
+
+  // ─── Search helpers ────────────────────────────────────────────────────────
+  const normalise = (s: string) => s.toLowerCase().trim();
+
+  const getFilteredUsers = useCallback(() => {
+    let users = activeTab === "student" ? students : workers;
+
+    if (activeTab === "worker" && categoryFilter !== "All Categories") {
+      users = users.filter((u) => u.staff_category === categoryFilter);
+    }
+
+    const q = normalise(searchQuery);
+    if (!q) return users;
+
+    return users.filter(
+      (u) =>
+        normalise(u.full_name).includes(q) ||
+        normalise(u.email).includes(q) ||
+        (u.phone_number ? normalise(u.phone_number).includes(q) : false)
+    );
+  }, [searchQuery, activeTab, students, workers, categoryFilter]);
+
+  const handleSearchChange = (text: string) => {
+    setSearchQuery(text);
+    // Debounce a visual "searching" indicator for UX feedback
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    if (text.trim()) {
+      setIsSearching(true);
+      searchDebounceRef.current = setTimeout(() => setIsSearching(false), 300);
+    } else {
+      setIsSearching(false);
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchQuery("");
+    setIsSearching(false);
+  };
+  // ───────────────────────────────────────────────────────────────────────────
+
+  // ─── Profile modal callbacks ─────────────────────────────────────────────
+  const handleOpenProfile = (item: User) => {
+    console.log("[UserManagement] Selected User:", item);
+    console.log("[UserManagement] User ID:", item.id, "| Name:", item.full_name, "| Role:", item.role);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedUser(item);
+    setProfileModalVisible(true);
+  };
+
+  const handleUserUpdated = (updatedUser: User) => {
+    if (updatedUser.role === "student") {
+      setStudents((prev) => prev.map((s) => (s.id === updatedUser.id ? updatedUser : s)));
+    } else {
+      setWorkers((prev) => prev.map((w) => (w.id === updatedUser.id ? updatedUser : w)));
+    }
+  };
+
+  const handleUserDeleted = (deletedId: number) => {
+    setStudents((prev) => prev.filter((s) => s.id !== deletedId));
+    setWorkers((prev) => prev.filter((w) => w.id !== deletedId));
+  };
+
+  const handleStatusToggled = (updatedUser: User) => {
+    if (updatedUser.role === "student") {
+      setStudents((prev) => prev.map((s) => (s.id === updatedUser.id ? updatedUser : s)));
+    } else {
+      setWorkers((prev) => prev.map((w) => (w.id === updatedUser.id ? updatedUser : w)));
+    }
+  };
+  // ──────────────────────────────────────────────────────────────────────────
+
   const handleRegisterUser = async () => {
     if (!fullName.trim() || !email.trim() || !password.trim()) {
       Alert.alert("Required Fields", "Full name, email, and password are required.");
@@ -86,6 +203,11 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
       Alert.alert("Required Fields", "Hostel name and room number are required for students.");
       return;
     }
+
+    if (activeTab === "worker" && !staffCategory) {
+      Alert.alert("Required Fields", "Please select a staff category.");
+      return;
+    }
  
     setIsRegistering(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -97,6 +219,7 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
           password: password.trim(),
           full_name: fullName.trim(),
           phone_number: phone.trim() || null,
+          staff_category: staffCategory,
           role: "worker",
           hostel_id: user?.hostel_id || null,
         });
@@ -128,6 +251,7 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
       setPassword("");
       setHostelName("");
       setRoomNumber("");
+      setStaffCategory("");
       setModalVisible(false);
     } catch (err: any) {
       Alert.alert("Registration Failed", err.message || "Failed to create user account.");
@@ -137,23 +261,33 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
   };
  
   const handleToggleStatus = (user: User) => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    const newStatus = user.status === "active" ? "suspended" : "active";
-    
+    const newStatus: User["status"] = user.status === "active" ? "suspended" : "active";
+    const doToggle = async () => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      try {
+        const updatedUser = await apiService.put<User>(
+          `/admin/users/${user.id}/status?status=${newStatus}`,
+          {}
+        );
+        // Use functional updates to avoid stale closure over students/workers arrays
+        if (user.role === "student") {
+          setStudents((prev) => prev.map((s) => (s.id === updatedUser.id ? updatedUser : s)));
+        } else {
+          setWorkers((prev) => prev.map((w) => (w.id === updatedUser.id ? updatedUser : w)));
+        }
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch (err: any) {
+        Alert.alert("Status Update Failed", err.message || "Could not update user status.");
+      }
+    };
+
     if (Platform.OS === "web") {
-      if (window.confirm(`${newStatus === "active" ? "Unblock" : "Block"} User\n\nAre you sure you want to ${newStatus === "active" ? "activate" : "block"} ${user.full_name}'s account?`)) {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        apiService.put<User>(`/admin/users/${user.id}/status?status=${newStatus}`, {}).then((updatedUser) => {
-          if (user.role === "student") {
-            setStudents(students.map((s) => (s.id === user.id ? updatedUser : s)));
-          } else {
-            setWorkers(workers.map((w) => (w.id === user.id ? updatedUser : w)));
-          }
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          window.alert(`Success: User ${newStatus === "active" ? "activated" : "blocked"}.`);
-        }).catch((err: any) => {
-          window.alert("Status Update Failed: " + (err.message || "Could not update user status."));
-        });
+      if (
+        window.confirm(
+          `${newStatus === "active" ? "Unblock" : "Block"} User\n\nAre you sure you want to ${newStatus === "active" ? "activate" : "block"} ${user.full_name}'s account?`
+        )
+      ) {
+        doToggle();
       }
     } else {
       Alert.alert(
@@ -164,27 +298,7 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
           {
             text: newStatus === "active" ? "Activate" : "Block",
             style: newStatus === "active" ? "default" : "destructive",
-            onPress: async () => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              try {
-                const updatedUser = await apiService.put<User>(
-                  `/admin/users/${user.id}/status?status=${newStatus}`,
-                  {}
-                );
-                if (user.role === "student") {
-                  setStudents(
-                    students.map((s) => (s.id === user.id ? updatedUser : s))
-                  );
-                } else {
-                  setWorkers(
-                    workers.map((w) => (w.id === user.id ? updatedUser : w))
-                  );
-                }
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              } catch (err: any) {
-                Alert.alert("Status Update Failed", err.message || "Could not update user status.");
-              }
-            },
+            onPress: doToggle,
           },
         ]
       );
@@ -193,36 +307,87 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
 
   const renderUserCard = ({ item }: { item: User }) => {
     const isBlocked = item.status === "suspended";
+    const userTypeLabel = item.role === "student" ? "Student" : "Staff";
+    const userTypeBadgeColor = item.role === "student" ? "#1E88E5" : "#7C3AED";
+    const registrationLabel = item.role === "student" ? "Reg. No." : "Employee ID";
+    // Build registration ID as "USR-<id>" since no separate reg_number field exists
+    const registrationValue = `USR-${String(item.id).padStart(4, "0")}`;
+
     return (
-      <Card style={[styles.card, isBlocked && styles.cardBlocked]}>
+      <Card
+        style={[styles.card, isBlocked && styles.cardBlocked, styles.cardClickable]}
+        onPress={() => handleOpenProfile(item)}
+        elevation="low"
+      >
         <View style={styles.userRow}>
-          <View style={[styles.avatar, isBlocked && styles.avatarBlocked]}>
-            <Text style={styles.avatarText}>
+          <View style={[styles.avatar, isBlocked && styles.avatarBlocked, { backgroundColor: isBlocked ? "#FFCDD2" : (item.role === "student" ? "#E3F0FF" : "#EDE9FF") }]}>
+            <Text style={[styles.avatarText, { color: isBlocked ? "#C62828" : (item.role === "student" ? Theme.colors.secondary : "#7C3AED") }]}>
               {item.full_name.charAt(0).toUpperCase()}
             </Text>
           </View>
           <View style={styles.userInfo}>
+            {/* Name + Blocked badge */}
             <View style={styles.nameRow}>
-              <Text style={[styles.userName, isBlocked && styles.textBlocked]}>{item.full_name}</Text>
+              <Text style={[styles.userName, isBlocked && styles.textBlocked]} numberOfLines={1}>{item.full_name}</Text>
               {isBlocked && (
                 <View style={styles.blockedBadge}>
                   <Text style={styles.blockedBadgeText}>BLOCKED</Text>
                 </View>
               )}
             </View>
+
+            {/* User Type + Status row */}
+            <View style={styles.detailRow}>
+              <View style={[styles.typeBadge, { backgroundColor: isBlocked ? "#FFCDD2" : `${userTypeBadgeColor}18` }]}>
+                <Text style={[styles.typeBadgeText, { color: isBlocked ? "#C62828" : userTypeBadgeColor }]}>{userTypeLabel}</Text>
+              </View>
+              <View style={[styles.statusBadge, { backgroundColor: isBlocked ? "#FFEBEE" : "#E8F5E9" }]}>
+                <View style={[styles.statusDot, { backgroundColor: isBlocked ? "#C62828" : "#4CAF50" }]} />
+                <Text style={[styles.statusText, { color: isBlocked ? "#C62828" : "#2E7D32" }]}>
+                  {isBlocked ? "Inactive" : "Active"}
+                </Text>
+              </View>
+            </View>
+
+            {item.role === "worker" && item.staff_category && (
+              <Text style={[styles.userDetailText, { color: Theme.colors.primary, fontWeight: "600", marginTop: 4 }]}>
+                {item.staff_category}
+              </Text>
+            )}
+
+            {/* Registration ID */}
+            <Text style={styles.userDetailText}>
+              <Ionicons name="card-outline" size={12} /> {registrationLabel}: {registrationValue}
+            </Text>
+
+            {/* Email */}
             <Text style={styles.userDetailText}>
               <Ionicons name="mail-outline" size={12} /> {item.email}
             </Text>
+
+            {/* Phone */}
             {item.phone_number ? (
               <Text style={styles.userDetailText}>
                 <Ionicons name="call-outline" size={12} /> {item.phone_number}
               </Text>
             ) : null}
+
+            {/* Hostel / Room (students) */}
+            {item.hostel_id ? (
+              <Text style={styles.userDetailText}>
+                <Ionicons name="business-outline" size={12} /> Hostel ID: {item.hostel_id}
+                {item.room_number ? `  ·  Room: ${item.room_number}` : ""}
+              </Text>
+            ) : null}
           </View>
-          
+
           <TouchableOpacity
             style={[styles.actionBtn, isBlocked ? styles.actionBtnUnblock : styles.actionBtnBlock]}
-            onPress={() => handleToggleStatus(item)}
+            onPress={(e) => {
+              // Stop propagation so clicking the block button doesn't also open the profile
+              e?.stopPropagation?.();
+              handleToggleStatus(item);
+            }}
           >
             <Ionicons
               name={isBlocked ? "lock-open-outline" : "ban-outline"}
@@ -234,6 +399,7 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
       </Card>
     );
   };
+
 
   return (
     <View style={styles.container}>
@@ -247,6 +413,7 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setActiveTab("student");
+            clearSearch();
           }}
           style={[styles.tab, activeTab === "student" && styles.activeTab]}
         >
@@ -259,6 +426,7 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setActiveTab("worker");
+            clearSearch();
           }}
           style={[styles.tab, activeTab === "worker" && styles.activeTab]}
         >
@@ -267,6 +435,72 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* ── Search Bar ── */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchInputWrapper}>
+          <Ionicons name="search-outline" size={18} color={searchQuery ? Theme.colors.secondary : Theme.colors.textLight} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search by name, ID, email, or phone number..."
+            placeholderTextColor="#A0AEC0"
+            value={searchQuery}
+            onChangeText={handleSearchChange}
+            returnKeyType="search"
+            clearButtonMode="while-editing"
+            autoCorrect={false}
+            autoCapitalize="none"
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={clearSearch} style={styles.clearBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Ionicons name="close-circle" size={18} color={Theme.colors.textLight} />
+            </TouchableOpacity>
+          )}
+        </View>
+        {isSearching && (
+          <ActivityIndicator size="small" color={Theme.colors.secondary} style={{ marginLeft: 8 }} />
+        )}
+      </View>
+
+      {/* Category Filter for Workers */}
+      {activeTab === "worker" && (
+        <View style={{ paddingHorizontal: Theme.spacing.lg, marginBottom: Theme.spacing.sm }}>
+          <Dropdown
+            label=""
+            value={categoryFilter}
+            options={[
+              "All Categories",
+              "Electrician",
+              "Plumber",
+              "Carpenter",
+              "Technician",
+              "AC Technician",
+              "Lift Technician",
+              "Painter",
+              "Welder",
+              "Housekeeping Staff",
+              "Security Staff",
+              "Gardener",
+              "General Maintenance Worker",
+              "Other"
+            ]}
+            onSelect={setCategoryFilter}
+          />
+        </View>
+      )}
+
+      {/* Search result count pill */}
+      {searchQuery.trim().length > 0 && (
+        <View style={styles.resultCountRow}>
+          <Ionicons name="filter-outline" size={13} color={Theme.colors.secondary} />
+          <Text style={styles.resultCountText}>
+            {getFilteredUsers().length === 0
+              ? "No users found."
+              : `${getFilteredUsers().length} result${getFilteredUsers().length !== 1 ? "s" : ""} for "${searchQuery}"`}
+          </Text>
+        </View>
+      )}
+
 
       <View style={styles.bannerRow}>
         <View>
@@ -295,15 +529,25 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
         </View>
       ) : (
         <FlatList
-          data={activeTab === "student" ? students : workers}
+          data={getFilteredUsers()}
           renderItem={renderUserCard}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Ionicons name="people-outline" size={64} color={Theme.colors.textLight} style={{ opacity: 0.4 }} />
-              <Text style={styles.emptyTitle}>No Accounts Registered</Text>
-              <Text style={styles.emptyDesc}>Tap 'Add Staff' to create a new credentials account.</Text>
+              {searchQuery.trim().length > 0 ? (
+                <>
+                  <Ionicons name="search-outline" size={64} color={Theme.colors.textLight} style={{ opacity: 0.4 }} />
+                  <Text style={styles.emptyTitle}>No users found.</Text>
+                  <Text style={styles.emptyDesc}>Try a different name, email, or phone number.</Text>
+                </>
+              ) : (
+                <>
+                  <Ionicons name="people-outline" size={64} color={Theme.colors.textLight} style={{ opacity: 0.4 }} />
+                  <Text style={styles.emptyTitle}>No Accounts Registered</Text>
+                  <Text style={styles.emptyDesc}>Tap 'Add Staff' to create a new credentials account.</Text>
+                </>
+              )}
             </View>
           }
         />
@@ -377,7 +621,29 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
                     />
                   </View>
                 </View>
-              ) : null}
+              ) : (
+                <Dropdown
+                  label="Staff Category *"
+                  placeholder="Select Staff Category"
+                  value={staffCategory}
+                  options={[
+                    "Electrician",
+                    "Plumber",
+                    "Carpenter",
+                    "Technician",
+                    "AC Technician",
+                    "Lift Technician",
+                    "Painter",
+                    "Welder",
+                    "Housekeeping Staff",
+                    "Security Staff",
+                    "Gardener",
+                    "General Maintenance Worker",
+                    "Other"
+                  ]}
+                  onSelect={setStaffCategory}
+                />
+              )}
 
               <Input
                 label="Temporary Password *"
@@ -399,6 +665,21 @@ export default function UserManagementScreen({ onBack }: UserManagementProps = {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* ── User Profile Detail Modal ── */}
+      <UserProfileModal
+        user={selectedUser}
+        visible={profileModalVisible}
+        onClose={() => {
+          setProfileModalVisible(false);
+          // Small delay before clearing user so the close animation completes
+          if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+          closeTimeoutRef.current = setTimeout(() => setSelectedUser(null), 400);
+        }}
+        onUserUpdated={handleUserUpdated}
+        onUserDeleted={handleUserDeleted}
+        onStatusToggled={handleStatusToggled}
+      />
     </View>
   );
 }
@@ -439,6 +720,86 @@ const styles = StyleSheet.create({
     color: Theme.colors.text,
     fontWeight: "700",
   },
+  // ── New: Search bar styles ──────────────────────────────────────────────
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Theme.spacing.lg,
+    paddingTop: Theme.spacing.sm,
+    paddingBottom: Theme.spacing.xs,
+  },
+  searchInputWrapper: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F0F4FC",
+    borderRadius: Theme.roundness.md,
+    borderWidth: 1.5,
+    borderColor: "transparent",
+    paddingHorizontal: 12,
+    minHeight: 48,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: Theme.colors.text,
+    paddingVertical: 0,
+    outlineStyle: "none" as any,
+  },
+  clearBtn: {
+    marginLeft: 6,
+    padding: 2,
+  },
+  resultCountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Theme.spacing.lg,
+    paddingBottom: Theme.spacing.xs,
+    gap: 4,
+  },
+  resultCountText: {
+    fontSize: 12,
+    color: Theme.colors.secondary,
+    fontWeight: "600",
+  },
+  // ── New: Enhanced card styles ───────────────────────────────────────────
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+    gap: 6,
+  },
+  typeBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 5,
+  },
+  typeBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+  },
+  statusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 5,
+    gap: 4,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusText: {
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  // ───────────────────────────────────────────────────────────────────────
   loader: {
     flex: 1,
     justifyContent: "center",
@@ -488,6 +849,10 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: Theme.spacing.md,
     width: "100%",
+  },
+  cardClickable: {
+    // Web-only cursor hint — React Native ignores unknown style keys on native
+    cursor: "pointer" as any,
   },
   cardBlocked: {
     backgroundColor: "#FFEBEE",

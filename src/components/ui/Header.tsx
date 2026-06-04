@@ -34,6 +34,14 @@ export const Header: React.FC<HeaderProps> = ({
     if (onBack) {
       onBack();
     } else {
+      // Fallback: try the router stack. On screens that use setActiveView()
+      // instead of expo-router stacks this will be a no-op, but it won't crash.
+      if (__DEV__ && showBackButton) {
+        console.warn(
+          "[Header] showBackButton is true but no onBack prop was provided. " +
+            "Back press will fall through to router.back()."
+        );
+      }
       router.back();
     }
   };

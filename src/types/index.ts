@@ -10,6 +10,7 @@ export interface User {
   role: UserRole;
   status: "active" | "suspended";
   push_token: string | null;
+  staff_category?: string;
   room_id?: number;
   room_number?: string;
   hostel_id?: number;

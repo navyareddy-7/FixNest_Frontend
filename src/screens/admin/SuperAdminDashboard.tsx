@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import { ResponsiveContainer } from "../../components/ui/ResponsiveContainer";
 import { Theme } from "../../constants/theme";
+import { useBackHandler } from "../../hooks/useBackHandler";
 import ProfileScreen from "../ProfileScreen";
 
 export default function SuperAdminDashboardScreen() {
@@ -48,6 +49,17 @@ export default function SuperAdminDashboardScreen() {
   const [selectedHostelId, setSelectedHostelId] = useState("");
   const [isSavingAdmin, setIsSavingAdmin] = useState(false);
   const [isDeletingAdmin, setIsDeletingAdmin] = useState<number | null>(null);
+
+  // ─── Android hardware back button ─────────────────────────────────────────
+  // Priority: modals → sub-views → dashboard root (let OS handle)
+  useBackHandler(
+    useCallback(() => {
+      if (hostelModalVisible) { setHostelModalVisible(false); return true; }
+      if (adminModalVisible) { setAdminModalVisible(false); return true; }
+      if (activeView !== "dashboard") { setActiveView("dashboard"); return true; }
+      return false;
+    }, [hostelModalVisible, adminModalVisible, activeView])
+  );
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -283,7 +295,15 @@ export default function SuperAdminDashboardScreen() {
         </ScrollView>
         </ResponsiveContainer>
 
-        <Modal animationType="slide" transparent={true} visible={hostelModalVisible} onRequestClose={() => setHostelModalVisible(false)}>
+        <Modal animationType="slide" transparent={true} visible={hostelModalVisible}
+          onRequestClose={() => {
+            // Reset form when dismissed via back button so next open starts clean
+            setNewHostelName("");
+            setHostelLocation("");
+            setTotalRooms("100");
+            setHostelModalVisible(false);
+          }}
+        >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
@@ -362,7 +382,18 @@ export default function SuperAdminDashboardScreen() {
         </ScrollView>
         </ResponsiveContainer>
 
-        <Modal animationType="slide" transparent={true} visible={adminModalVisible} onRequestClose={() => setAdminModalVisible(false)}>
+        <Modal animationType="slide" transparent={true} visible={adminModalVisible}
+          onRequestClose={() => {
+            // Reset form when dismissed via back button so next open starts clean
+            setAdminName("");
+            setAdminEmail("");
+            setAdminPassword("");
+            setAdminPhone("");
+            setSelectedHostelId("");
+            setEditingAdminId(null);
+            setAdminModalVisible(false);
+          }}
+        >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
