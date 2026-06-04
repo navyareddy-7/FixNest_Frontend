@@ -143,3 +143,22 @@ export interface Emergency {
   resolved_at: string | null;
   updated_at: string;
 }
+export interface EmergencyHotline {
+  id: number;
+  hotline_name: string;
+  hotline_number: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EmergencyContactPerson {
+  name: string | null;
+  phone: string | null;
+}
+
+export interface EmergencyContacts {
+  warden:     EmergencyContactPerson;
+  technician: EmergencyContactPerson;
+  hotline:    EmergencyContactPerson;
+}

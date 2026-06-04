@@ -28,6 +28,7 @@ import NoticeManagementScreen from "./NoticeManagement";
 import AdminComplaintListScreen, { ComplaintFilter } from "./AdminComplaintListScreen";
 import AdminComplaintDetailScreen from "./AdminComplaintDetailScreen";
 import EmergencyMonitorScreen from "./EmergencyMonitorScreen";
+import EmergencyHotlineSettingsScreen from "./EmergencyHotlineSettingsScreen";
 
 // ─── View union type ──────────────────────────────────────────────────────────
 type MainView =
@@ -38,6 +39,7 @@ type MainView =
   | "notices"
   | "profile"
   | "emergency"
+  | "hotline_settings"
   | "stat_list"      // stat-card drill-down list
   | "stat_detail";   // individual complaint detail
 
@@ -189,6 +191,14 @@ export default function AdminDashboardScreen() {
     return (
       <EmergencyMonitorScreen
         onBack={() => { setActiveView("dashboard"); }}
+      />
+    );
+  }
+
+  if (activeView === "hotline_settings") {
+    return (
+      <EmergencyHotlineSettingsScreen
+        onBack={() => setActiveView("dashboard")}
       />
     );
   }
@@ -357,6 +367,20 @@ export default function AdminDashboardScreen() {
               <Text style={styles.actionCardTitle}>Emergency Monitor</Text>
               <Text style={styles.actionCardDesc}>Active SOS &amp; escalations</Text>
             </TouchableOpacity>
+          </View>
+
+          {/* Third row: Hotline Settings */}
+          <View style={[styles.actionGrid, { marginTop: 8 }]}>
+            <TouchableOpacity
+              style={[styles.actionCard, { backgroundColor: "#EA580C" }]}
+              onPress={() => setActiveView("hotline_settings")}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="call-outline" size={24} color="#FFFFFF" />
+              <Text style={styles.actionCardTitle}>Hotline Settings</Text>
+              <Text style={styles.actionCardDesc}>Configure emergency number</Text>
+            </TouchableOpacity>
+            <View style={{ flex: 1, marginHorizontal: 4 }} />
           </View>
 
           {/* ── Clickable Stats Grid ── */}

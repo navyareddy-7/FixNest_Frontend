@@ -29,7 +29,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { apiService } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
-import { Emergency, EmergencyType } from "../../types";
+import { Emergency, EmergencyType, EmergencyContacts } from "../../types";
 import { Header } from "../../components/ui/Header";
 import { Theme } from "../../constants/theme";
 import { useBackHandler } from "../../hooks/useBackHandler";
@@ -37,8 +37,8 @@ import { useBackHandler } from "../../hooks/useBackHandler";
 // ─── Constants ────────────────────────────────────────────────────────────────
 const HOLD_DURATION_MS = 2000;
 
-// Emergency hotline — update to real hostel number
-const EMERGENCY_HOTLINE = "tel:+917799999999";
+// Fallback dialler used ONLY when the API returns no contact number
+const FALLBACK_DIAL = "tel:112";
 
 interface EmergencyCategory {
   type: EmergencyType;
@@ -589,10 +589,12 @@ const catStyles = StyleSheet.create({
 // ─── Status Phase ─────────────────────────────────────────────────────────────
 function StatusPhase({
   emergency,
+  contacts,
   onCancel,
   isCancelling,
 }: {
   emergency: Emergency;
+  contacts: EmergencyContacts | null;
   onCancel: () => void;
   isCancelling: boolean;
 }) {
@@ -713,23 +715,39 @@ function StatusPhase({
         )}
       </View>
 
-      {/* Direct call buttons */}
+      {/* Emergency Contacts — sourced from live API */}
       <View style={statStyles.sectionCard}>
         <Text style={statStyles.sectionTitle}>Emergency Contacts</Text>
-        <TouchableOpacity
-          style={[statStyles.callBtn, { backgroundColor: "#DC2626", marginBottom: 10 }]}
-          onPress={() => Linking.openURL(EMERGENCY_HOTLINE)}
-        >
-          <Ionicons name="call" size={18} color="#FFFFFF" />
-          <Text style={statStyles.callBtnText}>📞 Emergency Hotline</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[statStyles.callBtn, { backgroundColor: "#7C3AED" }]}
-          onPress={() => Linking.openURL(EMERGENCY_HOTLINE)}
-        >
-          <Ionicons name="call" size={18} color="#FFFFFF" />
-          <Text style={statStyles.callBtnText}>📞 Call Security</Text>
-        </TouchableOpacity>
+
+        {/* Warden (Admin profile) */}
+        <ContactCallRow
+          label="Warden"
+          name={contacts?.warden?.name ?? null}
+          phone={contacts?.warden?.phone ?? null}
+          color="#7C3AED"
+          icon="person-circle-outline"
+        />
+
+        {/* Technician (Staff profile) */}
+        {!emergency.assigned_technician && (
+          <ContactCallRow
+            label="Technician"
+            name={contacts?.technician?.name ?? null}
+            phone={contacts?.technician?.phone ?? null}
+            color={Theme.colors.secondary}
+            icon="construct-outline"
+          />
+        )}
+
+        {/* Emergency Hotline (Admin-configured) */}
+        <ContactCallRow
+          label={contacts?.hotline?.name ?? "Emergency Hotline"}
+          name={contacts?.hotline?.name ?? "Emergency Hotline"}
+          phone={contacts?.hotline?.phone ?? null}
+          color="#DC2626"
+          icon="call-outline"
+          isHotline
+        />
       </View>
 
       {/* Cancel false alarm */}
@@ -759,6 +777,71 @@ function InfoItem({ icon, label, value }: { icon: any; label: string; value: str
       <Ionicons name={icon} size={15} color={Theme.colors.textLight} style={{ marginRight: 8 }} />
       <Text style={statStyles.infoLabel}>{label}:</Text>
       <Text style={statStyles.infoValue} numberOfLines={1}>{value}</Text>
+    </View>
+  );
+}
+
+// ─── ContactCallRow ───────────────────────────────────────────────────────────
+// Renders a contact card with name, phone and a call button.
+// Used for Warden, Technician, and Hotline in the StatusPhase.
+function ContactCallRow({
+  label,
+  name,
+  phone,
+  color,
+  icon,
+  isHotline = false,
+}: {
+  label: string;
+  name: string | null;
+  phone: string | null;
+  color: string;
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  isHotline?: boolean;
+}) {
+  const displayName  = name  ?? (isHotline ? "Not configured" : "Not assigned");
+  const displayPhone = phone ?? "No number on file";
+  const canCall      = !!phone;
+
+  const handleCall = () => {
+    if (!phone) {
+      Alert.alert(
+        "No Number Available",
+        isHotline
+          ? "The emergency hotline has not been configured by the admin yet. Please use the warden or technician contact."
+          : `No phone number is on file for the ${label}.`
+      );
+      return;
+    }
+    const dialUri = phone.startsWith("tel:") ? phone : `tel:${phone}`;
+    Linking.openURL(dialUri);
+  };
+
+  return (
+    <View style={statStyles.contactBlock}>
+      <View style={statStyles.contactRow}>
+        <View style={[statStyles.contactIconBox, { backgroundColor: color + "18" }]}>
+          <Ionicons name={icon} size={20} color={color} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={statStyles.contactLabel}>{label}</Text>
+          <Text style={statStyles.contactName}>{displayName}</Text>
+          <Text style={[statStyles.contactPhone, !phone && { color: "#9CA3AF" }]}>
+            {displayPhone}
+          </Text>
+        </View>
+      </View>
+      <TouchableOpacity
+        style={[
+          statStyles.callBtn,
+          { backgroundColor: canCall ? color : "#9CA3AF" },
+        ]}
+        onPress={handleCall}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="call" size={16} color="#FFFFFF" />
+        <Text style={statStyles.callBtnText}>📞 Call {label}</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -819,7 +902,23 @@ const statStyles = StyleSheet.create({
   },
   sectionTitle: { fontSize: 14, fontWeight: "800", color: Theme.colors.text, marginBottom: 12 },
 
-  contactRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 14 },
+  contactBlock: {
+    borderBottomWidth: 1,
+    borderBottomColor: Theme.colors.border,
+    paddingBottom: 14,
+    marginBottom: 14,
+  },
+  contactRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 10 },
+  contactIconBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  contactLabel: { fontSize: 11, fontWeight: "700", color: Theme.colors.textLight, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2 },
+  contactName:  { fontSize: 14, fontWeight: "700", color: Theme.colors.text },
+  contactPhone: { fontSize: 12, color: Theme.colors.textLight, marginTop: 2 },
   avatar: {
     width: 44,
     height: 44,
@@ -828,9 +927,7 @@ const statStyles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  avatarText:   { fontSize: 18, fontWeight: "700", color: Theme.colors.primary },
-  contactName:  { fontSize: 15, fontWeight: "700", color: Theme.colors.text },
-  contactPhone: { fontSize: 12, color: Theme.colors.textLight, marginTop: 2 },
+  avatarText: { fontSize: 18, fontWeight: "700", color: Theme.colors.primary },
 
   callBtn: {
     backgroundColor: Theme.colors.resolved,
@@ -866,11 +963,18 @@ function OfflineFallbackPhase({
   errorMessage,
   onRetry,
   selectedType,
+  contacts,
 }: {
   errorMessage: string;
   onRetry: () => void;
   selectedType: string;
+  contacts: EmergencyContacts | null;
 }) {
+  const dial = (phone: string | null | undefined, fallback = FALLBACK_DIAL) => {
+    const uri = phone ? (phone.startsWith("tel:") ? phone : `tel:${phone}`) : fallback;
+    Linking.openURL(uri);
+  };
+
   return (
     <ScrollView contentContainerStyle={offlineStyles.container}>
       {/* Error banner */}
@@ -892,35 +996,33 @@ function OfflineFallbackPhase({
       <Text style={offlineStyles.sectionLabel}>CALL FOR HELP NOW</Text>
 
       <TouchableOpacity
-        style={[offlineStyles.callBtn, { backgroundColor: "#DC2626" }]}
-        onPress={() => Linking.openURL(EMERGENCY_HOTLINE)}
-      >
-        <Ionicons name="call" size={20} color="#FFFFFF" />
-        <Text style={offlineStyles.callBtnText}>📞 Emergency Hotline</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[offlineStyles.callBtn, { backgroundColor: "#7C3AED" }]}
-        onPress={() => Linking.openURL(EMERGENCY_HOTLINE)}
-      >
-        <Ionicons name="call" size={20} color="#FFFFFF" />
-        <Text style={offlineStyles.callBtnText}>📞 Call Security</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
         style={[offlineStyles.callBtn, { backgroundColor: "#059669" }]}
-        onPress={() => Linking.openURL(EMERGENCY_HOTLINE)}
+        onPress={() => dial(contacts?.warden?.phone)}
       >
         <Ionicons name="call" size={20} color="#FFFFFF" />
-        <Text style={offlineStyles.callBtnText}>📞 Call Warden</Text>
+        <Text style={offlineStyles.callBtnText}>
+          📞 Call Warden{contacts?.warden?.name ? ` — ${contacts.warden.name}` : ""}
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={[offlineStyles.callBtn, { backgroundColor: Theme.colors.secondary }]}
-        onPress={() => Linking.openURL(EMERGENCY_HOTLINE)}
+        onPress={() => dial(contacts?.technician?.phone)}
       >
         <Ionicons name="call" size={20} color="#FFFFFF" />
-        <Text style={offlineStyles.callBtnText}>📞 Call Technician</Text>
+        <Text style={offlineStyles.callBtnText}>
+          📞 Call Technician{contacts?.technician?.name ? ` — ${contacts.technician.name}` : ""}
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[offlineStyles.callBtn, { backgroundColor: "#DC2626" }]}
+        onPress={() => dial(contacts?.hotline?.phone)}
+      >
+        <Ionicons name="call" size={20} color="#FFFFFF" />
+        <Text style={offlineStyles.callBtnText}>
+          📞 {contacts?.hotline?.name ?? "Emergency Hotline"}
+        </Text>
       </TouchableOpacity>
 
       {/* Retry */}
@@ -995,9 +1097,17 @@ export default function EmergencySOSScreen({ onBack }: EmergencySOSScreenProps) 
   const [isSending, setIsSending]   = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [emergency, setEmergency]   = useState<Emergency | null>(null);
+  const [contacts, setContacts]     = useState<EmergencyContacts | null>(null);
   const [offlineError, setOfflineError] = useState("");
   const [pendingType, setPendingType]   = useState<EmergencyType | null>(null);
   const { } = useAuth(); // keep context subscription for future use
+
+  // Fetch emergency contacts once on mount (runs in background, non-blocking)
+  useEffect(() => {
+    apiService.get<EmergencyContacts>("/emergency-hotline/contacts", true, true)
+      .then(data => setContacts(data))
+      .catch(err => console.warn("[SOS] Could not fetch contacts:", err.message));
+  }, []);
 
   // Android back button
   useBackHandler(
@@ -1135,6 +1245,7 @@ export default function EmergencySOSScreen({ onBack }: EmergencySOSScreenProps) 
       {phase === "status" && emergency && (
         <StatusPhase
           emergency={emergency}
+          contacts={contacts}
           onCancel={handleCancel}
           isCancelling={isCancelling}
         />
@@ -1145,6 +1256,7 @@ export default function EmergencySOSScreen({ onBack }: EmergencySOSScreenProps) 
           errorMessage={offlineError}
           onRetry={handleRetry}
           selectedType={pendingType ?? "other"}
+          contacts={contacts}
         />
       )}
     </View>
