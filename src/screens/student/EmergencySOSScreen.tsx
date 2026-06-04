@@ -135,7 +135,7 @@ const ring = StyleSheet.create({
 });
 
 // ─── Hold Phase ───────────────────────────────────────────────────────────────
-function HoldPhase({ onActivated }: { onActivated: () => void }) {
+function HoldPhase({ onActivated, contacts }: { onActivated: () => void; contacts: EmergencyContacts | null }) {
   const [holding, setHolding] = useState(false);
   const [cancelled, setCancelled] = useState(false);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -240,11 +240,18 @@ function HoldPhase({ onActivated }: { onActivated: () => void }) {
 
       {/* Hotline */}
       <TouchableOpacity
-        style={holdStyles.hotlineBtn}
-        onPress={() => Linking.openURL(EMERGENCY_HOTLINE)}
+        style={[holdStyles.hotlineBtn, !contacts?.hotline?.phone && { opacity: 0.6 }]}
+        disabled={!contacts?.hotline?.phone}
+        onPress={() => {
+          if (contacts?.hotline?.phone) {
+            Linking.openURL(contacts.hotline.phone.startsWith("tel:") ? contacts.hotline.phone : `tel:${contacts.hotline.phone}`);
+          }
+        }}
       >
         <Ionicons name="call" size={18} color="#DC2626" />
-        <Text style={holdStyles.hotlineBtnText}>📞 Emergency Hotline</Text>
+        <Text style={holdStyles.hotlineBtnText}>
+          {contacts?.hotline?.phone ? "📞 Emergency Hotline" : "Not Configured"}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -371,9 +378,11 @@ const holdStyles = StyleSheet.create({
 function CategoryPhase({
   onSend,
   isSending,
+  contacts,
 }: {
   onSend: (type: EmergencyType, desc?: string) => void;
   isSending: boolean;
+  contacts: EmergencyContacts | null;
 }) {
   const [selected, setSelected] = useState<EmergencyType | null>(null);
 
@@ -453,11 +462,18 @@ function CategoryPhase({
 
       {/* Hotline */}
       <TouchableOpacity
-        style={catStyles.hotlineRow}
-        onPress={() => Linking.openURL(EMERGENCY_HOTLINE)}
+        style={[catStyles.hotlineRow, !contacts?.hotline?.phone && { opacity: 0.6 }]}
+        disabled={!contacts?.hotline?.phone}
+        onPress={() => {
+          if (contacts?.hotline?.phone) {
+            Linking.openURL(contacts.hotline.phone.startsWith("tel:") ? contacts.hotline.phone : `tel:${contacts.hotline.phone}`);
+          }
+        }}
       >
         <Ionicons name="call-outline" size={16} color="#DC2626" />
-        <Text style={catStyles.hotlineText}>📞 Emergency Hotline (direct call)</Text>
+        <Text style={catStyles.hotlineText}>
+          {contacts?.hotline?.phone ? "📞 Emergency Hotline (direct call)" : "Not Configured"}
+        </Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -1235,11 +1251,11 @@ export default function EmergencySOSScreen({ onBack }: EmergencySOSScreenProps) 
       />
 
       {phase === "hold" && (
-        <HoldPhase onActivated={handleActivated} />
+        <HoldPhase onActivated={handleActivated} contacts={contacts} />
       )}
 
       {phase === "category" && (
-        <CategoryPhase onSend={handleSend} isSending={isSending} />
+        <CategoryPhase onSend={handleSend} isSending={isSending} contacts={contacts} />
       )}
 
       {phase === "status" && emergency && (
